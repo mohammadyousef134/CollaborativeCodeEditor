@@ -14,18 +14,18 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
-    private final UserRepository repo;
+    private final UserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public AuthService(UserRepository repo, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public AuthService(UserRepository userRepo, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.passwordEncoder = passwordEncoder;
-        this.repo = repo;
+        this.userRepo = userRepo;
         this.jwtUtil = jwtUtil;
     }
 
     public void register(RegisterRequest request) {
-        if (repo.findByEmail(request.getEmail()).isPresent()) {
+        if (userRepo.findByEmail(request.getEmail()).isPresent()) {
             throw new ForbiddenException("Email is already exists");
         }
 
@@ -33,11 +33,11 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.USER);
-        repo.save(user);
+        userRepo.save(user);
     }
 
     public String login(loginRequest request) {
-        User user = repo.findByEmail(request.getEmail()).orElseThrow(() -> new ResourceNotFoundException("Invalid credentials"));
+        User user = userRepo.findByEmail(request.getEmail()).orElseThrow(() -> new ResourceNotFoundException("Invalid credentials"));
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new ResourceNotFoundException("Invalid credentials");
         }

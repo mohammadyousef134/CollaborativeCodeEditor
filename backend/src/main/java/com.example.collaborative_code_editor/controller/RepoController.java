@@ -3,6 +3,7 @@ package com.example.collaborative_code_editor.controller;
 import com.example.collaborative_code_editor.DTO.CreateRepoRequest;
 import com.example.collaborative_code_editor.DTO.InviteUserToRepoRequest;
 import com.example.collaborative_code_editor.entity.Repo;
+import com.example.collaborative_code_editor.security.SecurityUtils;
 import com.example.collaborative_code_editor.service.RepoService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/repo")
+@RequestMapping("api/repo")
 public class RepoController {
     private final RepoService service;
 
@@ -20,30 +21,19 @@ public class RepoController {
 
     @PostMapping
     public void createRepo(@RequestBody CreateRepoRequest request) {
-        Long userId = (Long) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
-        System.out.println(userId);
+        Long userId = SecurityUtils.getCurrentUserId();
         service.createRepo(request.getName(), userId);
     }
 
     @GetMapping
     public List<Repo> getMyRepos() {
-        Long userId = (Long) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
+        Long userId = SecurityUtils.getCurrentUserId();
         return service.getMyRepos(userId);
     }
 
     @DeleteMapping("/{repoId}")
     public void deleteRepo(@PathVariable Long repoId) {
-        Long userId = (Long) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
-
+        Long userId = SecurityUtils.getCurrentUserId();
         service.DeleteRepo(repoId, userId);
     }
 
@@ -52,11 +42,7 @@ public class RepoController {
             @PathVariable Long repoId,
             @RequestBody InviteUserToRepoRequest request
             ) {
-
-        Long userId = (Long) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
+        Long userId = SecurityUtils.getCurrentUserId();
 
         service.inviteUser(repoId, userId, request.getEmail());
     }

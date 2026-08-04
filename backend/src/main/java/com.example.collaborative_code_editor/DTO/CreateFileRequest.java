@@ -8,4 +8,5 @@ import lombok.Setter;
 public class CreateFileRequest {
     private String name;
     private String language;
+    private String type;
 }

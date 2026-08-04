@@ -1,6 +1,7 @@
 package com.example.collaborative_code_editor.controller;
 
 import com.example.collaborative_code_editor.DTO.InvitationResponse;
+import com.example.collaborative_code_editor.security.SecurityUtils;
 import com.example.collaborative_code_editor.service.RepoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,39 +17,20 @@ public class InvitationController {
 
     @GetMapping
     public List<InvitationResponse> getMyInvitations() {
-
-        Long userId = Long.parseLong(
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-                        .getPrincipal()
-                        .toString()
-        );
-
+        Long userId = SecurityUtils.getCurrentUserId();
         return service.getMyInvitations(userId);
     }
 
     @PostMapping("/{invitationId}/accept")
     public void acceptInvitation(@PathVariable Long invitationId) {
-
-        Long userId = (Long) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
-
+        Long userId = SecurityUtils.getCurrentUserId();
         service.acceptInvitation(invitationId, userId);
     }
 
     @PostMapping("/{invitationId}/decline")
     public void declineInvitation(@PathVariable Long invitationId) {
-
-        Long userId = (Long) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
+        Long userId = SecurityUtils.getCurrentUserId();
         service.declineInvitation(invitationId, userId);
     }
-
-    // sned request why
 
 }

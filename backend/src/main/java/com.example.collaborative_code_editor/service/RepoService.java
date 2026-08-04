@@ -48,7 +48,7 @@ public class RepoService {
     public void createRepo(String name, Long userId) {
         Repo repo = new Repo();
         User user = userRepo.findById(userId).orElseThrow(
-                () -> new RuntimeException(new ResourceNotFoundException("User not found"))
+                () -> new ResourceNotFoundException("User not found")
         );
         repo.setOwner(user);
         repo.setName(name);
