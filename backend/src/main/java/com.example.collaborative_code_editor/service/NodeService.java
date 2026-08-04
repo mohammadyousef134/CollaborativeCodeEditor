@@ -91,14 +91,14 @@ public class NodeService {
         String oldContent = node.getBlob().getContent();
         String newContent = content == null ? "" : content;
 
+        Blob blob = node.getBlob();
         if (!oldContent.equals(newContent)) {
 
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-            node.getBlob().setContent(newContent);
+            blob.setContent(newContent);
         }
-
+        blobRepository.save(blob);
         return nodeRepository.save(node);
     }
 

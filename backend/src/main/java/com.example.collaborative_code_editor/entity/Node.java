@@ -3,6 +3,7 @@ package com.example.collaborative_code_editor.entity;
 import com.example.collaborative_code_editor.enums.NodeType;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "nodes")
+@NoArgsConstructor
 public class Node {
 
     public Node(String name, NodeType type) {

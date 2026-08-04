@@ -16,9 +16,6 @@ public class Blob {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String contentHash;
-
     @Lob
     @Column(columnDefinition = "LONGTEXT")
     private String content;
