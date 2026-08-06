@@ -1,6 +1,7 @@
 package com.example.collaborative_code_editor.controller;
 
 import com.example.collaborative_code_editor.DTO.CreateFileRequest;
+import com.example.collaborative_code_editor.DTO.NodeResponse;
 import com.example.collaborative_code_editor.DTO.UpdateFileRequest;
 import com.example.collaborative_code_editor.entity.Node;
 import com.example.collaborative_code_editor.security.SecurityUtils;
@@ -19,13 +20,13 @@ public class NodeController {
     private NodeService service;
 
     @GetMapping
-    public List<Node> getFiles(@PathVariable Long repoId) {
+    public List<NodeResponse> getFiles(@PathVariable Long repoId) {
         Long userId = SecurityUtils.getCurrentUserId();
         return service.getNodes(repoId, userId);
     }
 
     @PostMapping
-    public Node createNewFile(@PathVariable Long repoId, @RequestBody CreateFileRequest request) {
+    public NodeResponse createNewFile(@PathVariable Long repoId, @RequestBody CreateFileRequest request) {
         Long userId = SecurityUtils.getCurrentUserId();
         return service.createFile(
                 repoId,
@@ -36,7 +37,7 @@ public class NodeController {
     }
 
     @PutMapping("/{fileId}")
-    public Node updateFile(@PathVariable Long repoId, @PathVariable Long fileId, @RequestBody UpdateFileRequest request) {
+    public NodeResponse updateFile(@PathVariable Long repoId, @PathVariable Long fileId, @RequestBody UpdateFileRequest request) {
         Long userId = SecurityUtils.getCurrentUserId();
         return service.updateFile(repoId, fileId, userId, request.getContent());
     }
@@ -48,7 +49,7 @@ public class NodeController {
     }
     
     @GetMapping("/{fileId}")
-    public Node getFile(
+    public NodeResponse getFile(
             @PathVariable Long repoId,
             @PathVariable Long fileId
     ) {

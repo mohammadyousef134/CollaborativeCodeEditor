@@ -1,5 +1,6 @@
 package com.example.collaborative_code_editor.service;
 
+import com.example.collaborative_code_editor.DTO.NodeResponse;
 import com.example.collaborative_code_editor.entity.*;
 import com.example.collaborative_code_editor.enums.NodeType;
 import com.example.collaborative_code_editor.exception.ForbiddenException;
@@ -9,6 +10,7 @@ import com.example.collaborative_code_editor.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -43,14 +45,20 @@ public class NodeService {
         throw new ForbiddenException("You cannot access this repo");
     }
 
-    public List<Node> getNodes(Long repoId, Long userId) {
+    public List<NodeResponse> getNodes(Long repoId, Long userId) {
 
         getRepoWithAccess(repoId, userId);
 
-        return nodeRepository.findByRepoId(repoId);
+        List<Node> nodes = nodeRepository.findByRepoId(repoId);
+        List<NodeResponse> res = new ArrayList<>();
+        for (Node node : nodes) {
+            NodeResponse nodeResponse = new NodeResponse(node.getId(), node.getName(), node.getParent().getId(), node.getType(), node.getBlob().getLanguage());
+            res.add(nodeResponse);
+        }
+        return res;
     }
 
-    public Node createFile(Long repoId, Long userId, String name, String language) {
+    public NodeResponse createFile(Long repoId, Long userId, String name, String language) {
 
         Repo repo = getRepoWithAccess(repoId, userId);
 
@@ -63,10 +71,14 @@ public class NodeService {
         Node file = new Node(name, NodeType.FILE);
         file.setRepo(repo);
         file.setBlob(blob);
-        return nodeRepository.save(file);
+
+        NodeResponse nodeResponse = new NodeResponse(file.getId(), file.getName(), file.getParent().getId(), file.getType(), file.getBlob().getLanguage());
+
+        nodeRepository.save(file);
+        return nodeResponse;
     }
 
-    public Node updateFile(Long repoId,
+    public NodeResponse updateFile(Long repoId,
                                Long fileId,
                                Long userId,
                                String content) {
@@ -98,8 +110,13 @@ public class NodeService {
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
             blob.setContent(newContent);
         }
+
         blobRepository.save(blob);
-        return nodeRepository.save(node);
+        nodeRepository.save(node);
+
+        NodeResponse nodeResponse = new NodeResponse(node.getId(), node.getName(), node.getParent().getId(), node.getType(), node.getBlob().getLanguage());
+
+        return nodeResponse;
     }
 
     public void deleteFile(Long repoId, Long fileId, Long userId) {
@@ -116,7 +133,7 @@ public class NodeService {
     }
 
 
-    public Node getFile(Long repoId, Long fileId, Long userId) {
+    public NodeResponse getFile(Long repoId, Long fileId, Long userId) {
 
         getRepoWithAccess(repoId, userId);
 
@@ -126,7 +143,7 @@ public class NodeService {
         if (!node.getRepo().getId().equals(repoId)) {
             throw new ForbiddenException("File does not belong to this repo");
         }
-
-        return node;
+        NodeResponse nodeResponse = new NodeResponse(node.getId(), node.getName(), node.getParent().getId(), node.getType(), node.getBlob().getLanguage());
+        return nodeResponse;
     }
 }
