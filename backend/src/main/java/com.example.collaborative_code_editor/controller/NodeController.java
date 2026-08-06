@@ -1,6 +1,7 @@
 package com.example.collaborative_code_editor.controller;
 
 import com.example.collaborative_code_editor.DTO.CreateFileRequest;
+import com.example.collaborative_code_editor.DTO.FileContentResponse;
 import com.example.collaborative_code_editor.DTO.NodeResponse;
 import com.example.collaborative_code_editor.DTO.UpdateFileRequest;
 import com.example.collaborative_code_editor.entity.Node;
@@ -20,20 +21,26 @@ public class NodeController {
     private NodeService service;
 
     @GetMapping
-    public List<NodeResponse> getFiles(@PathVariable Long repoId) {
+    public List<NodeResponse> getNodes(@PathVariable Long repoId,
+                                       @RequestParam(required = false) Long folderId) {
         Long userId = SecurityUtils.getCurrentUserId();
-        return service.getNodes(repoId, userId);
+        return service.getNodes(repoId, folderId, userId);
     }
 
     @PostMapping
-    public NodeResponse createNewFile(@PathVariable Long repoId, @RequestBody CreateFileRequest request) {
+    public NodeResponse createNode(@PathVariable Long repoId, @RequestBody CreateFileRequest request) {
         Long userId = SecurityUtils.getCurrentUserId();
-        return service.createFile(
-                repoId,
-                userId,
-                request.getName(),
-                request.getLanguage()
-        );
+        return service.createNode(repoId, userId, request.getName(), request.getLanguage(), request.getType(), request.getParentId());
+
+    }
+
+    @GetMapping("/{fileId}")
+    public FileContentResponse getFile(
+            @PathVariable Long repoId,
+            @PathVariable Long fileId
+    ) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return service.getFile(repoId, fileId, userId);
     }
 
     @PutMapping("/{fileId}")
@@ -45,16 +52,8 @@ public class NodeController {
     @DeleteMapping("/{fileId}")
     public void deleteFile(@PathVariable Long repoId, @PathVariable Long fileId) {
         Long userId = SecurityUtils.getCurrentUserId();
-        service.deleteFile(repoId, fileId, userId);
+        service.deleteNode(repoId, fileId, userId);
     }
-    
-    @GetMapping("/{fileId}")
-    public NodeResponse getFile(
-            @PathVariable Long repoId,
-            @PathVariable Long fileId
-    ) {
-        Long userId = SecurityUtils.getCurrentUserId();
-        return service.getFile(repoId, fileId, userId);
-    }
+
 
 }

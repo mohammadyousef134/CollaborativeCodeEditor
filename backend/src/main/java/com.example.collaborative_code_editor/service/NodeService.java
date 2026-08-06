@@ -1,5 +1,6 @@
 package com.example.collaborative_code_editor.service;
 
+import com.example.collaborative_code_editor.DTO.FileContentResponse;
 import com.example.collaborative_code_editor.DTO.NodeResponse;
 import com.example.collaborative_code_editor.entity.*;
 import com.example.collaborative_code_editor.enums.NodeType;
@@ -9,8 +10,6 @@ import com.example.collaborative_code_editor.repository.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -20,12 +19,9 @@ public class NodeService {
     @Autowired
     private ReopRepository repoRepository;
     @Autowired
-    private UserRepository userRepository;
-    @Autowired
     private RepoMemberRepository memberRepository;
     @Autowired
     private BlobRepository blobRepository;
-
 
     private Repo getRepoWithAccess(Long repoId, Long userId) {
 
@@ -45,105 +41,134 @@ public class NodeService {
         throw new ForbiddenException("You cannot access this repo");
     }
 
-    public List<NodeResponse> getNodes(Long repoId, Long userId) {
-
-        getRepoWithAccess(repoId, userId);
-
-        List<Node> nodes = nodeRepository.findByRepoId(repoId);
-        List<NodeResponse> res = new ArrayList<>();
-        for (Node node : nodes) {
-            NodeResponse nodeResponse = new NodeResponse(node.getId(), node.getName(), node.getParent().getId(), node.getType(), node.getBlob().getLanguage());
-            res.add(nodeResponse);
+    private Node getOwnedNode(Long repoId, Long nodeId) {
+        Node node = nodeRepository.findById(nodeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Node not found"));
+        if (!node.getRepo().getId().equals(repoId)) {
+            throw new ForbiddenException("Node does not belong to this repo");
         }
+        return node;
+    }
+
+    private NodeResponse toResponse(Node node) {
+        Long parentId = node.getParent() != null ? node.getParent().getId() : null;
+        String language = node.getBlob() != null ? node.getBlob().getLanguage() : null;
+        return new NodeResponse(node.getId(), node.getName(), parentId, node.getType(), language);
+    }
+
+    private FileContentResponse toFileContentResponse(Node node) {
+        FileContentResponse res = new FileContentResponse();
+        res.setId(node.getId());
+        res.setName(node.getName());
+        res.setParentId(node.getParent() == null ? null : node.getParent().getId());
+        res.setLanguage(node.getBlob() == null ? null : node.getBlob().getLanguage());
+        res.setContent(node.getBlob() == null ? null : node.getBlob().getContent());
         return res;
     }
 
-    public NodeResponse createFile(Long repoId, Long userId, String name, String language) {
-
-        Repo repo = getRepoWithAccess(repoId, userId);
-
-        Blob blob = new Blob();
-        blob.setContent("");
-        blob.setLanguage(language);
-
-        blobRepository.save(blob);
-
-        Node file = new Node(name, NodeType.FILE);
-        file.setRepo(repo);
-        file.setBlob(blob);
-
-        NodeResponse nodeResponse = new NodeResponse(file.getId(), file.getName(), file.getParent().getId(), file.getType(), file.getBlob().getLanguage());
-
-        nodeRepository.save(file);
-        return nodeResponse;
-    }
-
-    public NodeResponse updateFile(Long repoId,
-                               Long fileId,
-                               Long userId,
-                               String content) {
-
+    // folderId == null -> repo root nodes
+    public List<NodeResponse> getNodes(Long repoId, Long folderId, Long userId) {
         getRepoWithAccess(repoId, userId);
 
-        Node node = nodeRepository.findById(fileId)
-                .orElseThrow(() -> new ResourceNotFoundException("File not found"));
-
-        if (!node.getRepo().getId().equals(repoId)) {
-            throw new ForbiddenException("File does not belong to this repo");
+        List<Node> nodes;
+        if (folderId == null) {
+            nodes = nodeRepository.findByRepoIdAndParentId(repoId, null);
+        } else {
+            Node folder = getOwnedNode(repoId, folderId);
+            if (folder.getType() != NodeType.FOLDER) {
+                throw new ForbiddenException("Node is not a folder");
+            }
+            nodes = nodeRepository.findByRepoIdAndParentId(repoId, folderId);
         }
+
+        return nodes.stream().map(this::toResponse).toList();
+    }
+
+    public NodeResponse createNode(Long repoId, Long userId, String name, String language, String type, Long parentId) {
+        Repo repo = getRepoWithAccess(repoId, userId);
+
+        NodeType nodeType;
+        try {
+            nodeType = NodeType.valueOf(type);
+        } catch (Exception e) {
+            throw new ForbiddenException("type must be FILE or FOLDER");
+        }
+
+        boolean exists = parentId == null
+                ? nodeRepository.existsByRepoIdAndParentIsNullAndName(repoId, name)
+                : nodeRepository.existsByRepoIdAndParentIdAndName(repoId, parentId, name);
+        if (exists) {
+            throw new ForbiddenException("A node with this name already exists here");
+        }
+
+        Node parent = null;
+        if (parentId != null) {
+            parent = getOwnedNode(repoId, parentId);
+            if (parent.getType() != NodeType.FOLDER) {
+                throw new ForbiddenException("Parent must be a folder");
+            }
+        }
+
+        Node node = new Node(name, nodeType);
+        node.setRepo(repo);
+        node.setParent(parent);
+
+        if (nodeType == NodeType.FILE) {
+            Blob blob = new Blob();
+            blob.setContent("");
+            blob.setLanguage(language);
+            blobRepository.save(blob);
+            node.setBlob(blob);
+        }
+
+        nodeRepository.save(node);
+        return toResponse(node);
+    }
+
+
+    public FileContentResponse getFile(Long repoId, Long fileId, Long userId) {
+        getRepoWithAccess(repoId, userId);
+        Node node = getOwnedNode(repoId, fileId);
+        if (node.getType() != NodeType.FILE) {
+            throw new ForbiddenException("Node is not a file");
+        }
+        return toFileContentResponse(node);
+    }
+
+    public NodeResponse updateFile(Long repoId, Long fileId, Long userId, String content) {
+        getRepoWithAccess(repoId, userId);
+        Node node = getOwnedNode(repoId, fileId);
 
         if (node.getType() != NodeType.FILE) {
             throw new ForbiddenException("Only file nodes can be updated");
         }
-
         if (node.getBlob() == null) {
             throw new ResourceNotFoundException("Blob not found for this file");
         }
 
-        String oldContent = node.getBlob().getContent();
-        String newContent = content == null ? "" : content;
-
-        Blob blob = node.getBlob();
-        if (!oldContent.equals(newContent)) {
-
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-            blob.setContent(newContent);
-        }
-
-        blobRepository.save(blob);
+        node.getBlob().setContent(content == null ? "" : content);
+        blobRepository.save(node.getBlob());
         nodeRepository.save(node);
 
-        NodeResponse nodeResponse = new NodeResponse(node.getId(), node.getName(), node.getParent().getId(), node.getType(), node.getBlob().getLanguage());
-
-        return nodeResponse;
+        return toResponse(node);
     }
 
-    public void deleteFile(Long repoId, Long fileId, Long userId) {
-        Repo repo = getRepoWithAccess(repoId, userId);
-
-        Node node = nodeRepository.findById(fileId)
-                .orElseThrow(() -> new ResourceNotFoundException("File not found"));
-
-        if (!node.getRepo().getId().equals(repoId)) {
-            throw new ForbiddenException("File does not belong to this repo");
-        }
-
-        nodeRepository.delete(node);
-    }
-
-
-    public NodeResponse getFile(Long repoId, Long fileId, Long userId) {
-
+    public void deleteNode(Long repoId, Long nodeId, Long userId) {
         getRepoWithAccess(repoId, userId);
+        Node node = getOwnedNode(repoId, nodeId);
+        deleteRecursively(node);
+    }
 
-        Node node = nodeRepository.findById(fileId)
-                .orElseThrow(() -> new ResourceNotFoundException("File not found"));
-
-        if (!node.getRepo().getId().equals(repoId)) {
-            throw new ForbiddenException("File does not belong to this repo");
+    private void deleteRecursively(Node node) {
+        if (node.getType() == NodeType.FOLDER) {
+            List<Node> children = nodeRepository.findByRepoIdAndParentId(node.getRepo().getId(), node.getId());
+            for (Node child : children) {
+                deleteRecursively(child);
+            }
         }
-        NodeResponse nodeResponse = new NodeResponse(node.getId(), node.getName(), node.getParent().getId(), node.getType(), node.getBlob().getLanguage());
-        return nodeResponse;
+        if (node.getBlob() != null) {
+            blobRepository.delete(node.getBlob());
+        }
+        nodeRepository.delete(node);
     }
 }
