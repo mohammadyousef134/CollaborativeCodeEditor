@@ -84,6 +84,60 @@ public class NodeService {
         return nodes.stream().map(this::toResponse).toList();
     }
 
+    public NodeResponse updateNode(Long repoId, Long nodeId, Long userId, String name, Long parentId) {
+        getRepoWithAccess(repoId, userId);
+        Node node = getOwnedNode(repoId, nodeId);
+
+        if (name == null || name.isBlank()) {
+            throw new ForbiddenException("Name cannot be empty");
+        }
+
+        Node newParent = null;
+        if (parentId != null) {
+            if (parentId.equals(nodeId)) {
+                throw new ForbiddenException("A node cannot be its own parent");
+            }
+            newParent = getOwnedNode(repoId, parentId);
+            if (newParent.getType() != NodeType.FOLDER) {
+                throw new ForbiddenException("Parent must be a folder");
+            }
+            if (node.getType() == NodeType.FOLDER && isDescendant(newParent, node)) {
+                throw new ForbiddenException("Cannot move a folder into its own subtree");
+            }
+        }
+
+        boolean parentChanged = parentId == null
+                ? node.getParent() != null
+                : !parentId.equals(node.getParent() == null ? null : node.getParent().getId());
+        boolean nameChanged = !name.equals(node.getName());
+
+        if (parentChanged || nameChanged) {
+            boolean exists = parentId == null
+                    ? nodeRepository.existsByRepoIdAndParentIsNullAndName(repoId, name)
+                    : nodeRepository.existsByRepoIdAndParentIdAndName(repoId, parentId, name);
+            if (exists && (parentChanged || nameChanged)) {
+                throw new ForbiddenException("A node with this name already exists here");
+            }
+        }
+
+        node.setName(name);
+        node.setParent(newParent);
+        nodeRepository.save(node);
+
+        return toResponse(node);
+    }
+
+    private boolean isDescendant(Node candidate, Node ancestor) {
+        Node current = candidate;
+        while (current != null) {
+            if (current.getId().equals(ancestor.getId())) {
+                return true;
+            }
+            current = current.getParent();
+        }
+        return false;
+    }
+
     public NodeResponse createNode(Long repoId, Long userId, String name, String language, String type, Long parentId) {
         Repo repo = getRepoWithAccess(repoId, userId);
 

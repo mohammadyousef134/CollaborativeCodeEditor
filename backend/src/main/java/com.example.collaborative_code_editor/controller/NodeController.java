@@ -1,9 +1,6 @@
 package com.example.collaborative_code_editor.controller;
 
-import com.example.collaborative_code_editor.DTO.CreateFileRequest;
-import com.example.collaborative_code_editor.DTO.FileContentResponse;
-import com.example.collaborative_code_editor.DTO.NodeResponse;
-import com.example.collaborative_code_editor.DTO.UpdateFileRequest;
+import com.example.collaborative_code_editor.DTO.*;
 import com.example.collaborative_code_editor.entity.Node;
 import com.example.collaborative_code_editor.security.SecurityUtils;
 import com.example.collaborative_code_editor.service.NodeService;
@@ -32,6 +29,12 @@ public class NodeController {
         Long userId = SecurityUtils.getCurrentUserId();
         return service.createNode(repoId, userId, request.getName(), request.getLanguage(), request.getType(), request.getParentId());
 
+    }
+
+    @PatchMapping("/{nodeId}")
+    public NodeResponse updateNode(@PathVariable Long repoId, @PathVariable Long nodeId, @RequestBody UpdateNodeRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return service.updateNode(repoId, nodeId, userId, request.getName(), request.getParentId());
     }
 
     @GetMapping("/{fileId}")
