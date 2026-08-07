@@ -3,9 +3,8 @@ package com.example.collaborative_code_editor.DTO;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
 @Setter
-public class UpdateNodeRequest {
+@Getter
+public class MoveNodeRequest {
     private Long parentId;
-    private String name;
 }

@@ -1,11 +1,9 @@
 package com.example.collaborative_code_editor.controller;
 
 import com.example.collaborative_code_editor.DTO.*;
-import com.example.collaborative_code_editor.entity.Node;
 import com.example.collaborative_code_editor.security.SecurityUtils;
 import com.example.collaborative_code_editor.service.NodeService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,10 +29,16 @@ public class NodeController {
 
     }
 
-    @PatchMapping("/{nodeId}")
-    public NodeResponse updateNode(@PathVariable Long repoId, @PathVariable Long nodeId, @RequestBody UpdateNodeRequest request) {
+    @PatchMapping("/{nodeId}/rename")
+    public NodeResponse renameNode(@PathVariable Long repoId, @PathVariable Long nodeId, @RequestBody RenameNodeRequest request) {
         Long userId = SecurityUtils.getCurrentUserId();
-        return service.updateNode(repoId, nodeId, userId, request.getName(), request.getParentId());
+        return service.renameNode(repoId, nodeId, userId, request.getName());
+    }
+
+    @PatchMapping("/{nodeId}/move")
+    public NodeResponse moveNode(@PathVariable Long repoId, @PathVariable Long nodeId, @RequestBody MoveNodeRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return service.moveNode(repoId, nodeId, userId, request.getParentId());
     }
 
     @GetMapping("/{fileId}")

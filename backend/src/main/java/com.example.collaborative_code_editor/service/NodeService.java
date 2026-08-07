@@ -84,13 +84,35 @@ public class NodeService {
         return nodes.stream().map(this::toResponse).toList();
     }
 
-    public NodeResponse updateNode(Long repoId, Long nodeId, Long userId, String name, Long parentId) {
+    public NodeResponse renameNode(Long repoId, Long nodeId, Long userId, String name) {
         getRepoWithAccess(repoId, userId);
         Node node = getOwnedNode(repoId, nodeId);
 
         if (name == null || name.isBlank()) {
             throw new ForbiddenException("Name cannot be empty");
         }
+
+        boolean nameChanged = !name.equals(node.getName());
+
+        if (nameChanged) {
+            Long parentId = node.getParent() == null ? null : node.getParent().getId();
+            boolean exists = parentId == null
+                    ? nodeRepository.existsByRepoIdAndParentIsNullAndName(repoId, name)
+                    : nodeRepository.existsByRepoIdAndParentIdAndName(repoId, parentId, name);
+            if (exists) {
+                throw new ForbiddenException("A node with this name already exists here");
+            }
+        }
+
+        node.setName(name);
+        nodeRepository.save(node);
+
+        return toResponse(node);
+    }
+
+    public NodeResponse moveNode(Long repoId, Long nodeId, Long userId, Long parentId) {
+        getRepoWithAccess(repoId, userId);
+        Node node = getOwnedNode(repoId, nodeId);
 
         Node newParent = null;
         if (parentId != null) {
@@ -106,21 +128,20 @@ public class NodeService {
             }
         }
 
+        Long currentParentId = node.getParent() == null ? null : node.getParent().getId();
         boolean parentChanged = parentId == null
-                ? node.getParent() != null
-                : !parentId.equals(node.getParent() == null ? null : node.getParent().getId());
-        boolean nameChanged = !name.equals(node.getName());
+                ? currentParentId != null
+                : !parentId.equals(currentParentId);
 
-        if (parentChanged || nameChanged) {
+        if (parentChanged) {
             boolean exists = parentId == null
-                    ? nodeRepository.existsByRepoIdAndParentIsNullAndName(repoId, name)
-                    : nodeRepository.existsByRepoIdAndParentIdAndName(repoId, parentId, name);
-            if (exists && (parentChanged || nameChanged)) {
-                throw new ForbiddenException("A node with this name already exists here");
+                    ? nodeRepository.existsByRepoIdAndParentIsNullAndName(repoId, node.getName())
+                    : nodeRepository.existsByRepoIdAndParentIdAndName(repoId, parentId, node.getName());
+            if (exists) {
+                throw new ForbiddenException("A node with this name already exists in the target folder");
             }
         }
 
-        node.setName(name);
         node.setParent(newParent);
         nodeRepository.save(node);
 
