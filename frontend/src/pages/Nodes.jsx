@@ -7,6 +7,7 @@ function Nodes() {
   const { repoId } = useParams();
   const navigate = useNavigate();
 
+  const [newNodeType, setNewNodeType] = useState("FILE");
   const [nodes, setNode] = useState([]);
   const [newNodeName, setNewNodeName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -46,7 +47,8 @@ function Nodes() {
 
     await api.post(`/api/repos/${repoId}/nodes`, {
       name: newNodeName,
-      language: language
+      type: newNodeType,
+      language: newNodeType === "FILE" ? language : undefined
     });
 
     setNewNodeName("");
@@ -86,12 +88,20 @@ function Nodes() {
         value={newNodeName}
         onChange={(e) => setNewNodeName(e.target.value)}
       />
-      <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-        <option value="javascript">JavaScript</option>
-        <option value="python">Python</option>
-        <option value="java">Java</option>
-        <option value="cpp">C++</option>
+
+      <select value={newNodeType} onChange={(e) => setNewNodeType(e.target.value)}>
+        <option value="FILE">File</option>
+        <option value="FOLDER">Folder</option>
       </select>
+
+      {newNodeType === "FILE" && (
+        <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+          <option value="javascript">JavaScript</option>
+          <option value="python">Python</option>
+          <option value="java">Java</option>
+          <option value="cpp">C++</option>
+        </select>
+      )}
 
       <button onClick={createNode}>
         Create Node
