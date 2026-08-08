@@ -11,11 +11,11 @@ function App() {
 
       <Route path="/" element={<Login />} />
 
-      <Route path="/projects" element={<Projects />} />
+      <Route path="/repos" element={<Projects />} />
 
-      <Route path="/projects/:projectId/documents" element={<Documents />} />
+      <Route path="/repos/:repoId/nodes" element={<Documents />} />
       
-      <Route path="/projects/:projectId/documents/:id" element={<DocumentEditor />} />
+      <Route path="/repos/:repoId/nodes/:id" element={<DocumentEditor />} />
 
       <Route path="/invitations" element={<Invitations />} />
 

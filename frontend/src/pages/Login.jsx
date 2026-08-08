@@ -24,7 +24,7 @@ function Login() {
 
       alert("Login successful");
 
-      navigate("/projects");  
+      navigate("/repos");
 
     } catch (error) {
 
