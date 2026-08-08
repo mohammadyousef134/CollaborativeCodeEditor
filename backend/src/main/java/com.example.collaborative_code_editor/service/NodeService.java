@@ -72,7 +72,7 @@ public class NodeService {
 
         List<Node> nodes;
         if (folderId == null) {
-            nodes = nodeRepository.findByRepoIdAndParentId(repoId, null);
+            nodes = nodeRepository.findByRepoIdAndParentIsNull(repoId);
         } else {
             Node folder = getOwnedNode(repoId, folderId);
             if (folder.getType() != NodeType.FOLDER) {
@@ -241,9 +241,10 @@ public class NodeService {
                 deleteRecursively(child);
             }
         }
-        if (node.getBlob() != null) {
+        Blob blob = node.getBlob();
+        nodeRepository.delete(node);
+        if (blob != null) {
             blobRepository.delete(node.getBlob());
         }
-        nodeRepository.delete(node);
     }
 }

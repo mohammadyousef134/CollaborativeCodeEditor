@@ -10,4 +10,5 @@ public interface NodeRepository extends JpaRepository<Node, Long> {
     List<Node> findByRepoIdAndParentId(Long repoId, Long parentId);
     boolean existsByRepoIdAndParentIdAndName(Long repoId, Long parentId, String name);
     boolean existsByRepoIdAndParentIsNullAndName(Long repoId, String name);
+    List<Node> findByRepoIdAndParentIsNull(Long repoId);
 }

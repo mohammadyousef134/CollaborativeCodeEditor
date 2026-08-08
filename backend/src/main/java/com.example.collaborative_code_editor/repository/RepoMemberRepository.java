@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface RepoMemberRepository extends JpaRepository<RepoMember, Long> {
     List<RepoMember> findByUserId(Long userId);
+    List<RepoMember> findByRepoId(Long repoId);
     boolean existsByRepoIdAndUserId(Long repoId, Long userId);
 }

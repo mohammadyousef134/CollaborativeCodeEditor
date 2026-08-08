@@ -1,16 +1,11 @@
 package com.example.collaborative_code_editor.service;
 
 import com.example.collaborative_code_editor.DTO.InvitationResponse;
-import com.example.collaborative_code_editor.entity.RepoInvitation;
-import com.example.collaborative_code_editor.entity.Repo;
-import com.example.collaborative_code_editor.entity.RepoMember;
+import com.example.collaborative_code_editor.entity.*;
+import com.example.collaborative_code_editor.enums.NodeType;
 import com.example.collaborative_code_editor.exception.ForbiddenException;
 import com.example.collaborative_code_editor.exception.ResourceNotFoundException;
-import com.example.collaborative_code_editor.entity.User;
-import com.example.collaborative_code_editor.repository.RepoInvitationRepository;
-import com.example.collaborative_code_editor.repository.RepoMemberRepository;
-import com.example.collaborative_code_editor.repository.ReopRepository;
-import com.example.collaborative_code_editor.repository.UserRepository;
+import com.example.collaborative_code_editor.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +13,10 @@ import java.util.List;
 
 @Service
 public class RepoService {
+    @Autowired
+    private BlobRepository blobRepo;
+    @Autowired
+    private NodeRepository nodeRepo;
     @Autowired
     private ReopRepository repo;
     @Autowired
@@ -69,6 +68,15 @@ public class RepoService {
     public void DeleteRepo(Long repoId, Long userId) {
         Repo repo = this.repo.findById(repoId).orElseThrow(() -> new ResourceNotFoundException("Repo not found"));
         getRepoWithAccess(repoId, userId);
+
+        if (!repo.getOwner().getId().equals(userId)) {
+            throw new ForbiddenException("Only the owner can delete the repository");
+        }
+        List<Node> nodes = nodeRepo.findByRepoIdAndParentIsNull(repoId);
+
+        nodes.forEach(this::deleteRecursively);
+        invitationRepo.deleteAll(invitationRepo.findByRepoId(repoId));
+        memberRepo.deleteAll(memberRepo.findByRepoId(repoId));
         this.repo.delete(repo);
     }
 
@@ -140,5 +148,19 @@ public class RepoService {
                         inv.getRepo().getOwner().getEmail()
                 ))
                 .toList();
+    }
+
+    private void deleteRecursively(Node node) {
+        if (node.getType() == NodeType.FOLDER) {
+            List<Node> children = nodeRepo.findByRepoIdAndParentId(node.getRepo().getId(), node.getId());
+            for (Node child : children) {
+                deleteRecursively(child);
+            }
+        }
+        Blob blob = node.getBlob();
+        nodeRepo.delete(node);
+        if (blob != null) {
+            blobRepo.delete(node.getBlob());
+        }
     }
 }
