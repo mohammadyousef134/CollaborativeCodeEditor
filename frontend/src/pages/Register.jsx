@@ -2,34 +2,37 @@ import { useState } from "react";
 import api from "../api/api";
 import { useNavigate } from "react-router-dom";
 
-function Login() {
+function Register() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const navigate = useNavigate();   
+  const navigate = useNavigate();
 
-  const handleLogin = async () => {
+  const handleRegister = async () => {
 
     try {
 
-      const response = await api.post("/auth/login", {
+      await api.post("/auth/register", {
         email: email,
         password: password
       });
 
-      const token = response.data;
+      const loginResponse = await api.post("/auth/login", {
+        email: email,
+        password: password
+      });
+
+      const token = loginResponse.data;
 
       localStorage.setItem("token", token);
-
-      alert("Login successful");
 
       navigate("/repos");
 
     } catch (error) {
 
       console.log(error);
-      alert("Login failed");
+      alert(error.response?.data || "Registration failed");
 
     }
   };
@@ -37,7 +40,7 @@ function Login() {
   return (
     <div>
 
-      <h2>Login</h2>
+      <h2>Register</h2>
 
       <input
         placeholder="email"
@@ -56,18 +59,18 @@ function Login() {
 
       <br />
 
-      <button onClick={handleLogin}>
-        Login
+      <button onClick={handleRegister}>
+        Register
       </button>
 
       <br />
 
-      <button onClick={() => navigate("/register")}>
-        Create an account
+      <button onClick={() => navigate("/")}>
+        Back to login
       </button>
 
     </div>
   );
 }
 
-export default Login;
+export default Register;

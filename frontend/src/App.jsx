@@ -1,9 +1,10 @@
 import {Routes, Route} from "react-router-dom";
 import Login from "./pages/Login";
-import Projects from "./pages/Projects";
-import Documents from "./pages/Documents";
+import Repos from "./pages/Repos";
+import Nodes from "./pages/Nodes";
 import DocumentEditor from "./pages/DocumentEditor";
 import Invitations from "./pages/Invitations";
+import Register from "./pages/Register";
 
 function App() {
   return (
@@ -11,9 +12,11 @@ function App() {
 
       <Route path="/" element={<Login />} />
 
-      <Route path="/repos" element={<Projects />} />
+      <Route path="/register" element={<Register />} />
 
-      <Route path="/repos/:repoId/nodes" element={<Documents />} />
+      <Route path="/repos" element={<Repos />} />
+
+      <Route path="/repos/:repoId/nodes" element={<Nodes />} />
       
       <Route path="/repos/:repoId/nodes/:id" element={<DocumentEditor />} />
 
