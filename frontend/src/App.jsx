@@ -16,6 +16,8 @@ function App() {
 
       <Route path="/repos" element={<Repos />} />
 
+      <Route path="/repos/:repoId/nodes/:folderId" element={<Nodes />} />
+
       <Route path="/repos/:repoId/nodes" element={<Nodes />} />
       
       <Route path="/repos/:repoId/nodes/:id" element={<DocumentEditor />} />

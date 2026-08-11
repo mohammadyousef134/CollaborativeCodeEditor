@@ -1,83 +1,110 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../api/api";
 
 function Nodes() {
-
-  const { repoId } = useParams();
+  const { repoId, folderId } = useParams();
   const navigate = useNavigate();
 
   const [newNodeType, setNewNodeType] = useState("FILE");
   const [nodes, setNode] = useState([]);
+  const [breadcrumbs, setBreadcrumbs] = useState([]);
   const [newNodeName, setNewNodeName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [language, setLanguage] = useState("javascript");
 
   useEffect(() => {
     loadNodes();
-  }, [repoId]);
+    loadBreadcrumbs();
+  }, [repoId, folderId]);
 
   const inviteUser = async () => {
     if (!inviteEmail.trim()) return;
-
-    await api.post(`/api/repos/${repoId}/invite`, {
-      email: inviteEmail
-    });
-
+    await api.post(`/api/repos/${repoId}/invite`, { email: inviteEmail });
     setInviteEmail("");
-
     alert("Invitation sent");
-
   };
 
   const loadNodes = async () => {
-
     try {
-      const res = await api.get(`/api/repos/${repoId}/nodes`);
+      const url = folderId
+        ? `/api/repos/${repoId}/nodes?folderId=${folderId}`
+        : `/api/repos/${repoId}/nodes`;
+      const res = await api.get(url);
       setNode(res.data);
     } catch (err) {
       console.error("Failed to load nodes", err);
     }
+  };
 
+  // walk parentId chain up to root so refresh/direct-link still shows the full path
+  const loadBreadcrumbs = async () => {
+    if (!folderId) {
+      setBreadcrumbs([]);
+      return;
+    }
+    try {
+      const trail = [];
+      let currentId = folderId;
+      while (currentId) {
+        const res = await api.get(`/api/repos/${repoId}/nodes/${currentId}/info`);
+        trail.unshift(res.data);
+        currentId = res.data.parentId;
+      }
+      setBreadcrumbs(trail);
+    } catch (err) {
+      console.error("Failed to load breadcrumbs", err);
+    }
   };
 
   const createNode = async () => {
-
     if (!newNodeName.trim()) return;
 
     await api.post(`/api/repos/${repoId}/nodes`, {
       name: newNodeName,
       type: newNodeType,
-      language: newNodeType === "FILE" ? language : undefined
+      language: newNodeType === "FILE" ? language : undefined,
+      parentId: folderId || null
     });
 
     setNewNodeName("");
     loadNodes();
-
   };
 
   const deleteNode = async (id) => {
-
     await api.delete(`/api/repos/${repoId}/nodes/${id}`);
-
     loadNodes();
+  };
 
+  const openNode = (node) => {
+    if (node.type === "FOLDER") {
+      navigate(`/repos/${repoId}/nodes/${node.id}`);
+    } else {
+      navigate(`/repos/${repoId}/files/${node.id}`);
+    }
   };
 
   return (
     <div>
-
       <h3>Invite collaborator</h3>
-
       <input
         placeholder="User email"
         value={inviteEmail}
         onChange={(e) => setInviteEmail(e.target.value)}
       />
+      <button onClick={inviteUser}>Invite</button>
 
-      <button onClick={inviteUser}>
-        Invite
-      </button>
+      <hr />
+
+      <div>
+        <Link to={`/repos/${repoId}/nodes`}>Home</Link>
+        {breadcrumbs.map((crumb) => (
+          <span key={crumb.id}>
+            {" / "}
+            <Link to={`/repos/${repoId}/nodes/${crumb.id}`}>{crumb.name}</Link>
+          </span>
+        ))}
+      </div>
 
       <hr />
 
@@ -103,26 +130,20 @@ function Nodes() {
         </select>
       )}
 
-      <button onClick={createNode}>
-        Create Node
-      </button>
+      <button onClick={createNode}>Create Node</button>
 
       <hr />
 
-      {nodes.map(node => (
+      {nodes.map((node) => (
         <div key={node.id}>
-
           <span
-            onClick={() => navigate(`/repos/${repoId}/nodes/${node.id}`)}
+            onClick={() => openNode(node)}
             style={{ cursor: "pointer", marginRight: "10px" }}
           >
-            {node.name}
+            {node.type === "FOLDER" ? "📁" : "📄"} {node.name}
           </span>
 
-          <button onClick={() => deleteNode(node.id)}>
-            Delete
-          </button>
-
+          <button onClick={() => deleteNode(node.id)}>Delete</button>
         </div>
       ))}
 
