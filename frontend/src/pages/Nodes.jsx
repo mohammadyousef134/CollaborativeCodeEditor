@@ -76,6 +76,37 @@ function Nodes() {
     loadNodes();
   };
 
+  const renameNode = async (node) => {
+    const newName = prompt("New name:", node.name);
+    if (newName === null) return; // cancelled
+    if (!newName.trim() || newName === node.name) return;
+
+    try {
+      await api.patch(`/api/repos/${repoId}/nodes/${node.id}/rename`, { name: newName });
+      loadNodes();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to rename");
+    }
+  };
+
+  const moveNode = async (node) => {
+    const input = prompt("Target folder ID (leave empty for repo root):", "");
+    if (input === null) return; // cancelled
+
+    const parentId = input.trim() === "" ? null : Number(input.trim());
+    if (parentId !== null && Number.isNaN(parentId)) {
+      alert("Folder ID must be a number");
+      return;
+    }
+
+    try {
+      await api.patch(`/api/repos/${repoId}/nodes/${node.id}/move`, { parentId });
+      loadNodes();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to move");
+    }
+  };
+
   const openNode = (node) => {
     if (node.type === "FOLDER") {
       navigate(`/repos/${repoId}/nodes/${node.id}`);
@@ -143,6 +174,8 @@ function Nodes() {
             {node.type === "FOLDER" ? "📁" : "📄"} {node.name}
           </span>
 
+          <button onClick={() => renameNode(node)}>Rename</button>
+          <button onClick={() => moveNode(node)}>Move</button>
           <button onClick={() => deleteNode(node.id)}>Delete</button>
         </div>
       ))}
