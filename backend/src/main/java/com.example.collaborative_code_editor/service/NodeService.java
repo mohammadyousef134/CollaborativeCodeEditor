@@ -234,6 +234,12 @@ public class NodeService {
         deleteRecursively(node);
     }
 
+    public NodeResponse getNode(Long repoId, Long nodeId, Long userId) {
+        getRepoWithAccess(repoId, userId);
+        Node node = getOwnedNode(repoId, nodeId);
+        return toResponse(node);
+    }
+
     private void deleteRecursively(Node node) {
         if (node.getType() == NodeType.FOLDER) {
             List<Node> children = nodeRepository.findByRepoIdAndParentId(node.getRepo().getId(), node.getId());

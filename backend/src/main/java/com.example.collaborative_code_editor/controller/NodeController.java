@@ -62,5 +62,11 @@ public class NodeController {
         service.deleteNode(repoId, fileId, userId);
     }
 
+    @GetMapping("/{nodeId}/info")
+    public NodeResponse getNode(@PathVariable Long repoId, @PathVariable Long nodeId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return service.getNode(repoId, nodeId, userId);
+    }
+
 
 }
