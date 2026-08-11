@@ -2,7 +2,7 @@ import {Routes, Route} from "react-router-dom";
 import Login from "./pages/Login";
 import Repos from "./pages/Repos";
 import Nodes from "./pages/Nodes";
-import DocumentEditor from "./pages/DocumentEditor";
+import FileEditor from "./pages/FileEditor";
 import Invitations from "./pages/Invitations";
 import Register from "./pages/Register";
 
@@ -19,8 +19,8 @@ function App() {
       <Route path="/repos/:repoId/nodes/:folderId" element={<Nodes />} />
 
       <Route path="/repos/:repoId/nodes" element={<Nodes />} />
-      
-      <Route path="/repos/:repoId/nodes/:id" element={<DocumentEditor />} />
+
+      <Route path="/repos/:repoId/files/:fileId" element={<FileEditor />} />
 
       <Route path="/invitations" element={<Invitations />} />
 

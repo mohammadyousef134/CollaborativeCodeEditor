@@ -7,12 +7,12 @@ import api from "../api/api";
 
 const SAVE_DELAY_MS = 1000;
 
-function CodeEditor({ projectId, documentId, initialContent, language }) {
+function CodeEditor({ repoId, fileId, initialContent, language }) {
   const ydocRef = useRef(null);
   const providerRef = useRef(null);
   const bindingRef = useRef(null);
   const saveTimeoutRef = useRef(null);
-  const savePathRef = useRef(`/projects/${projectId}/documents/${documentId}`);
+  const savePathRef = useRef(`/api/repos/${repoId}/nodes/${fileId}`);
   const currentContentRef = useRef(initialContent ?? "");
   const lastSavedContentRef = useRef(initialContent ?? "");
 
@@ -41,7 +41,7 @@ function CodeEditor({ projectId, documentId, initialContent, language }) {
 
     const provider = new WebsocketProvider(
       "ws://localhost:1234",
-      `document-${documentId}`,
+      `file-${fileId}`,
       ydoc
     );
     providerRef.current = provider;
