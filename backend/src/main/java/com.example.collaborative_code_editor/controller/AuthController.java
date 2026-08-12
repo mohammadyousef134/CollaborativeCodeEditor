@@ -1,7 +1,9 @@
 package com.example.collaborative_code_editor.controller;
 
 import com.example.collaborative_code_editor.DTO.RegisterRequest;
+import com.example.collaborative_code_editor.DTO.UserResponse;
 import com.example.collaborative_code_editor.DTO.loginRequest;
+import com.example.collaborative_code_editor.security.SecurityUtils;
 import com.example.collaborative_code_editor.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -26,6 +28,12 @@ public class AuthController {
     @PostMapping("/login")
     public String login(@RequestBody loginRequest request) {
         return service.login(request);
+    }
+
+    @GetMapping("/me")
+    public UserResponse getCurrentUser() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return service.getCurrentUser(userId);
     }
 
 

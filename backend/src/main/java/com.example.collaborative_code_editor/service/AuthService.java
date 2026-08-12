@@ -1,6 +1,7 @@
 package com.example.collaborative_code_editor.service;
 
 import com.example.collaborative_code_editor.DTO.RegisterRequest;
+import com.example.collaborative_code_editor.DTO.UserResponse;
 import com.example.collaborative_code_editor.DTO.loginRequest;
 import com.example.collaborative_code_editor.enums.Role;
 import com.example.collaborative_code_editor.exception.ForbiddenException;
@@ -31,6 +32,7 @@ public class AuthService {
 
         User user = new User();
         user.setEmail(request.getEmail());
+        user.setName(request.getName());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.USER);
         userRepo.save(user);
@@ -42,5 +44,11 @@ public class AuthService {
             throw new ResourceNotFoundException("Invalid credentials");
         }
         return jwtUtil.generateToken(user.getId());
+    }
+
+    public UserResponse getCurrentUser(Long userId) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return new UserResponse(user.getId(), user.getName(), user.getEmail());
     }
 }
