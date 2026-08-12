@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/repos")
@@ -44,7 +45,13 @@ public class RepoController {
             ) {
         Long userId = SecurityUtils.getCurrentUserId();
 
-        service.inviteUser(repoId, userId, request.getEmail());
+        service.inviteUser(repoId, userId, request.getEmail(), request.getRole());
+    }
+
+    @GetMapping("/{repoId}/role")
+    public Map<String, String> getMyRole(@PathVariable Long repoId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return Map.of("role", service.getMyRole(repoId, userId));
     }
 
 

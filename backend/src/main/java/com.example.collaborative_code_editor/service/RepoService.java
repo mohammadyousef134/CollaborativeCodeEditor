@@ -2,6 +2,7 @@ package com.example.collaborative_code_editor.service;
 
 import com.example.collaborative_code_editor.DTO.InvitationResponse;
 import com.example.collaborative_code_editor.entity.*;
+import com.example.collaborative_code_editor.enums.MemberRole;
 import com.example.collaborative_code_editor.enums.NodeType;
 import com.example.collaborative_code_editor.exception.ForbiddenException;
 import com.example.collaborative_code_editor.exception.ResourceNotFoundException;
@@ -25,23 +26,24 @@ public class RepoService {
     private RepoMemberRepository memberRepo;
     @Autowired
     private RepoInvitationRepository invitationRepo;
-
-    private Repo getRepoWithAccess(Long repoId, Long userId) {
+    // only owner or an ADMIN member can invite new people
+    private Repo requireAdminAccess(Long repoId, Long userId) {
 
         Repo repo = this.repo.findById(repoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Repo not found"));
 
-        // owner allowed
         if (repo.getOwner().getId().equals(userId)) {
             return repo;
         }
 
-        // member allowed
-        if (memberRepo.existsByRepoIdAndUserId(repoId, userId)) {
-            return repo;
+        RepoMember member = memberRepo.findByRepoIdAndUserId(repoId, userId)
+                .orElseThrow(() -> new ForbiddenException("You cannot access this repo"));
+
+        if (member.getRole() != MemberRole.ADMIN) {
+            throw new ForbiddenException("Only an admin can invite new members");
         }
 
-        throw new ForbiddenException("You cannot access this repo");
+        return repo;
     }
 
     public void createRepo(String name, Long userId) {
@@ -65,9 +67,22 @@ public class RepoService {
 
     }
 
+    public String getMyRole(Long repoId, Long userId) {
+        Repo repo = this.repo.findById(repoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Repo not found"));
+
+        if (repo.getOwner().getId().equals(userId)) {
+            return "OWNER";
+        }
+
+        RepoMember member = memberRepo.findByRepoIdAndUserId(repoId, userId)
+                .orElseThrow(() -> new ForbiddenException("You cannot access this repo"));
+
+        return member.getRole().name();
+    }
+
     public void DeleteRepo(Long repoId, Long userId) {
         Repo repo = this.repo.findById(repoId).orElseThrow(() -> new ResourceNotFoundException("Repo not found"));
-        getRepoWithAccess(repoId, userId);
 
         if (!repo.getOwner().getId().equals(userId)) {
             throw new ForbiddenException("Only the owner can delete the repository");
@@ -80,16 +95,12 @@ public class RepoService {
         this.repo.delete(repo);
     }
 
-    public void inviteUser(Long repoId, Long userId, String email) {
-        Repo repo = this.repo.findById(repoId)
-                .orElseThrow(() -> new ResourceNotFoundException("Repo not found"));
+    public void inviteUser(Long repoId, Long userId, String email, MemberRole role) {
+        Repo repo = requireAdminAccess(repoId, userId);
 
         User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (!repo.getOwner().getId().equals(userId)) {
-            throw new ForbiddenException("Only owner can invite users");
-        }
         if(memberRepo.existsByRepoIdAndUserId(repoId, user.getId())){
             throw new RuntimeException("User already member");
         }
@@ -98,6 +109,7 @@ public class RepoService {
         invitation.setRepo(repo);
         invitation.setStatus("PENDING");
         invitation.setUser(user);
+        invitation.setRole(role == null ? MemberRole.EDITOR : role);
 
         invitationRepo.save(invitation);
     }
@@ -114,6 +126,7 @@ public class RepoService {
         RepoMember member = new RepoMember();
         member.setRepo(invitation.getRepo());
         member.setUser(invitation.getUser());
+        member.setRole(invitation.getRole());
 
         memberRepo.save(member);
 
@@ -145,7 +158,8 @@ public class RepoService {
                         inv.getId(),
                         inv.getRepo().getId(),
                         inv.getRepo().getName(),
-                        inv.getRepo().getOwner().getEmail()
+                        inv.getRepo().getOwner().getEmail(),
+                        inv.getRole()
                 ))
                 .toList();
     }

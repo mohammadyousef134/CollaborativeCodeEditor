@@ -7,12 +7,17 @@ function FileEditor() {
   const { repoId, fileId } = useParams();
   const [initialContent, setInitialContent] = useState(null);
   const [language, setLanguage] = useState(null);
+  const [readOnly, setReadOnly] = useState(false);
 
   useEffect(() => {
     const load = async () => {
-      const res = await api.get(`/api/repos/${repoId}/nodes/${fileId}`);
-      setInitialContent(res.data.content || "");
-      setLanguage(res.data.language || "javascript");
+      const [fileRes, roleRes] = await Promise.all([
+        api.get(`/api/repos/${repoId}/nodes/${fileId}`),
+        api.get(`/api/repos/${repoId}/role`)
+      ]);
+      setInitialContent(fileRes.data.content || "");
+      setLanguage(fileRes.data.language || "javascript");
+      setReadOnly(roleRes.data.role === "VIEWER");
     };
     load();
   }, [repoId, fileId]);
@@ -27,6 +32,7 @@ function FileEditor() {
       fileId={fileId}
       initialContent={initialContent}
       language={language}
+      readOnly={readOnly}
     />
   );
 }

@@ -1,5 +1,7 @@
 package com.example.collaborative_code_editor.entity;
 
+import com.example.collaborative_code_editor.enums.MemberRole;
+import io.micrometer.core.annotation.Counted;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,4 +22,7 @@ public class RepoMember {
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @Column(nullable = false)
+    private MemberRole role;
 }

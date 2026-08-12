@@ -45,11 +45,15 @@ function Invitations() {
         <div key={inv.invitationId}>
 
           <p>
-            Project: <b>{inv.projectName}</b>
+            Repository: <b>{inv.repoName}</b>
           </p>
 
           <p>
             Invited by: {inv.invitedBy}
+          </p>
+
+          <p>
+            Role: {inv.role}
           </p>
 
           <button onClick={() => acceptInvitation(inv.invitationId)}>

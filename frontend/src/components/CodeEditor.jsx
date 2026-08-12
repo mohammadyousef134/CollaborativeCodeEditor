@@ -9,7 +9,7 @@ import { colorForUserId, initialsForName } from "../utils/Presence";
 
 const SAVE_DELAY_MS = 1000;
 
-function CodeEditor({ repoId, fileId, initialContent, language }) {
+function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
   const ydocRef = useRef(null);
   const providerRef = useRef(null);
   const bindingRef = useRef(null);
@@ -144,6 +144,12 @@ function CodeEditor({ repoId, fileId, initialContent, language }) {
           {onlineUsers.length <= 1 ? "Only you" : `${onlineUsers.length} online`}
         </span>
 
+        {readOnly && (
+          <span style={{ color: "#e5c07b", fontSize: 12, fontWeight: 600 }}>
+            View only
+          </span>
+        )}
+
         <div style={{ display: "flex" }}>
           {onlineUsers.map((user, i) => (
             <div
@@ -176,6 +182,7 @@ function CodeEditor({ repoId, fileId, initialContent, language }) {
         language={language}
         theme="vs-dark"
         onMount={handleEditorDidMount}
+        options={{ readOnly: !!readOnly }}
       />
     </div>
   );

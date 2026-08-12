@@ -3,6 +3,7 @@ package com.example.collaborative_code_editor.service;
 import com.example.collaborative_code_editor.DTO.FileContentResponse;
 import com.example.collaborative_code_editor.DTO.NodeResponse;
 import com.example.collaborative_code_editor.entity.*;
+import com.example.collaborative_code_editor.enums.MemberRole;
 import com.example.collaborative_code_editor.enums.NodeType;
 import com.example.collaborative_code_editor.exception.ForbiddenException;
 import com.example.collaborative_code_editor.exception.ResourceNotFoundException;
@@ -33,12 +34,32 @@ public class NodeService {
             return repo;
         }
 
-        // collaborator
+        // any member (including VIEWER) can read
         if (memberRepository.existsByRepoIdAndUserId(repoId, userId)) {
             return repo;
         }
 
         throw new ForbiddenException("You cannot access this repo");
+    }
+
+    // for anything that modifies a node - VIEWER isn't enough, need EDITOR+
+    private Repo requireEditAccess(Long repoId, Long userId) {
+
+        Repo repo = repoRepository.findById(repoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Repo not found"));
+
+        if (repo.getOwner().getId().equals(userId)) {
+            return repo;
+        }
+
+        RepoMember member = memberRepository.findByRepoIdAndUserId(repoId, userId)
+                .orElseThrow(() -> new ForbiddenException("You cannot access this repo"));
+
+        if (member.getRole() == MemberRole.VIEWER) {
+            throw new ForbiddenException("Viewers cannot make changes to this repo");
+        }
+
+        return repo;
     }
 
     private Node getOwnedNode(Long repoId, Long nodeId) {
@@ -85,7 +106,7 @@ public class NodeService {
     }
 
     public NodeResponse renameNode(Long repoId, Long nodeId, Long userId, String name) {
-        getRepoWithAccess(repoId, userId);
+        requireEditAccess(repoId, userId);
         Node node = getOwnedNode(repoId, nodeId);
 
         if (name == null || name.isBlank()) {
@@ -111,7 +132,7 @@ public class NodeService {
     }
 
     public NodeResponse moveNode(Long repoId, Long nodeId, Long userId, Long parentId) {
-        getRepoWithAccess(repoId, userId);
+        requireEditAccess(repoId, userId);
         Node node = getOwnedNode(repoId, nodeId);
 
         Node newParent = null;
@@ -160,7 +181,7 @@ public class NodeService {
     }
 
     public NodeResponse createNode(Long repoId, Long userId, String name, String language, String type, Long parentId) {
-        Repo repo = getRepoWithAccess(repoId, userId);
+        Repo repo = requireEditAccess(repoId, userId);
 
         NodeType nodeType;
         try {
@@ -211,7 +232,7 @@ public class NodeService {
     }
 
     public NodeResponse updateFile(Long repoId, Long fileId, Long userId, String content) {
-        getRepoWithAccess(repoId, userId);
+        requireEditAccess(repoId, userId);
         Node node = getOwnedNode(repoId, fileId);
 
         if (node.getType() != NodeType.FILE) {
@@ -229,7 +250,7 @@ public class NodeService {
     }
 
     public void deleteNode(Long repoId, Long nodeId, Long userId) {
-        getRepoWithAccess(repoId, userId);
+        requireEditAccess(repoId, userId);
         Node node = getOwnedNode(repoId, nodeId);
         deleteRecursively(node);
     }
@@ -250,7 +271,7 @@ public class NodeService {
         Blob blob = node.getBlob();
         nodeRepository.delete(node);
         if (blob != null) {
-            blobRepository.delete(node.getBlob());
+            blobRepository.delete(blob);
         }
     }
 }

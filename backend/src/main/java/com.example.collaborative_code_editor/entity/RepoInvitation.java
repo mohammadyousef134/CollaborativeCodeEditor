@@ -1,5 +1,6 @@
 package com.example.collaborative_code_editor.entity;
 
+import com.example.collaborative_code_editor.enums.MemberRole;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,4 +27,7 @@ public class RepoInvitation {
 
     @Column(nullable = false)
     private String status;
+
+    @Column(nullable = false)
+    private MemberRole role;
 }

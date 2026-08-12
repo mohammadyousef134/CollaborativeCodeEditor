@@ -11,6 +11,7 @@ function Nodes() {
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const [newNodeName, setNewNodeName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("EDITOR");
   const [language, setLanguage] = useState("javascript");
 
   useEffect(() => {
@@ -20,9 +21,13 @@ function Nodes() {
 
   const inviteUser = async () => {
     if (!inviteEmail.trim()) return;
-    await api.post(`/api/repos/${repoId}/invite`, { email: inviteEmail });
-    setInviteEmail("");
-    alert("Invitation sent");
+    try {
+      await api.post(`/api/repos/${repoId}/invite`, { email: inviteEmail, role: inviteRole });
+      setInviteEmail("");
+      alert("Invitation sent");
+    } catch (err) {
+      alert(err.response?.data || "Failed to send invitation");
+    }
   };
 
   const loadNodes = async () => {
@@ -85,7 +90,7 @@ function Nodes() {
       await api.patch(`/api/repos/${repoId}/nodes/${node.id}/rename`, { name: newName });
       loadNodes();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to rename");
+      alert(err.response?.data || "Failed to rename");
     }
   };
 
@@ -103,7 +108,7 @@ function Nodes() {
       await api.patch(`/api/repos/${repoId}/nodes/${node.id}/move`, { parentId });
       loadNodes();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to move");
+      alert(err.response?.data || "Failed to move");
     }
   };
 
@@ -123,6 +128,11 @@ function Nodes() {
         value={inviteEmail}
         onChange={(e) => setInviteEmail(e.target.value)}
       />
+      <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
+        <option value="VIEWER">Viewer</option>
+        <option value="EDITOR">Editor</option>
+        <option value="ADMIN">Admin</option>
+      </select>
       <button onClick={inviteUser}>Invite</button>
 
       <hr />
