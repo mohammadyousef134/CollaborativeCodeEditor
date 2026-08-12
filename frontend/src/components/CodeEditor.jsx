@@ -1,9 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Editor from "@monaco-editor/react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { MonacoBinding } from "y-monaco";
 import api from "../api/api";
+import { getCurrentUserId } from "../utils/Jwt";
+import { colorForUserId, initialsForName } from "../utils/Presence";
 
 const SAVE_DELAY_MS = 1000;
 
@@ -15,15 +17,16 @@ function CodeEditor({ repoId, fileId, initialContent, language }) {
   const savePathRef = useRef(`/api/repos/${repoId}/nodes/${fileId}`);
   const currentContentRef = useRef(initialContent ?? "");
   const lastSavedContentRef = useRef(initialContent ?? "");
+  const [onlineUsers, setOnlineUsers] = useState([]);
 
   function scheduleSave(content) {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
-    
+
     saveTimeoutRef.current = setTimeout(async () => {
       if (content === lastSavedContentRef.current) return;
-      
+
       try {
         await api.put(savePathRef.current, { content });
         lastSavedContentRef.current = content;
@@ -33,7 +36,21 @@ function CodeEditor({ repoId, fileId, initialContent, language }) {
     }, SAVE_DELAY_MS);
   }
 
+  function teardownConnection() {
+    bindingRef.current?.destroy();
+    providerRef.current?.destroy();
+    ydocRef.current?.destroy();
+    bindingRef.current = null;
+    providerRef.current = null;
+    ydocRef.current = null;
+    setOnlineUsers([]);
+  }
+
   function handleEditorDidMount(editor) {
+    // guard: if this fires again on the same component instance (HMR, remount, etc.),
+    // tear down the previous connection first instead of leaking it
+    teardownConnection();
+
     const ydoc = new Y.Doc();
     ydocRef.current = ydoc;
 
@@ -45,6 +62,26 @@ function CodeEditor({ repoId, fileId, initialContent, language }) {
       ydoc
     );
     providerRef.current = provider;
+
+    const userId = getCurrentUserId();
+
+    // fetch our own name once and publish it via awareness
+    api.get("/auth/me").then((res) => {
+      provider.awareness.setLocalStateField("user", {
+        id: res.data.id,
+        name: res.data.name
+      });
+    }).catch(() => {
+      provider.awareness.setLocalStateField("user", { id: userId, name: null });
+    });
+
+    provider.awareness.on("change", () => {
+      const states = Array.from(provider.awareness.getStates().values());
+      const users = states
+        .map((state) => state.user)
+        .filter((user) => user && user.id !== undefined && user.id !== null);
+      setOnlineUsers(users);
+    });
 
     provider.on("sync", (isSynced) => {
       if (isSynced && ytext.length === 0 && initialContent) {
@@ -95,12 +132,52 @@ function CodeEditor({ repoId, fileId, initialContent, language }) {
   }, []);
 
   return (
-    <Editor
-      height="90vh"
-      language={language}
-      theme="vs-dark"
-      onMount={handleEditorDidMount}
-    />
+    <div>
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "8px 10px",
+        background: "#252526"
+      }}>
+        <span style={{ color: "#888", fontSize: 12 }}>
+          {onlineUsers.length <= 1 ? "Only you" : `${onlineUsers.length} online`}
+        </span>
+
+        <div style={{ display: "flex" }}>
+          {onlineUsers.map((user, i) => (
+            <div
+              key={`${user.id}-${i}`}
+              title={user.name || `User #${user.id}`}
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: "50%",
+                background: colorForUserId(user.id),
+                color: "#1e1e1e",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 11,
+                fontWeight: 600,
+                border: "2px solid #252526",
+                marginLeft: i === 0 ? 0 : -8,
+                cursor: "default"
+              }}
+            >
+              {initialsForName(user.name, user.id)}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Editor
+        height="90vh"
+        language={language}
+        theme="vs-dark"
+        onMount={handleEditorDidMount}
+      />
+    </div>
   );
 }
 

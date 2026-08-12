@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 function Register() {
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -14,6 +15,7 @@ function Register() {
     try {
 
       await api.post("/auth/register", {
+        name: name,
         email: email,
         password: password
       });
@@ -41,6 +43,14 @@ function Register() {
     <div>
 
       <h2>Register</h2>
+
+      <input
+        placeholder="name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+
+      <br />
 
       <input
         placeholder="email"
