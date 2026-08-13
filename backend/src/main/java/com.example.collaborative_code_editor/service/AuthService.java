@@ -40,6 +40,9 @@ public class AuthService {
 
     public String login(loginRequest request) {
         User user = userRepo.findByEmail(request.getEmail()).orElseThrow(() -> new ResourceNotFoundException("Invalid credentials"));
+        if (user.getPassword() == null) {
+            throw new ResourceNotFoundException("This account uses Google/GitHub sign-in, not a password");
+        }
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new ResourceNotFoundException("Invalid credentials");
         }
