@@ -18,9 +18,10 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
-
-    public SecurityConfig(JwtFilter jwtFilter) {
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    public SecurityConfig(JwtFilter jwtFilter, OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler) {
         this.jwtFilter = jwtFilter;
+        this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
     }
 
     @Bean
@@ -31,11 +32,15 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/auth/register").permitAll()
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((request, response, authException) ->
                                 response.sendError(401, "Unauthorized"))
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2LoginSuccessHandler)
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(form -> form.disable())
