@@ -66,6 +66,19 @@ function Login() {
         Create an account
       </button>
 
+      <br />
+      <br />
+
+      <button onClick={() => (window.location.href = "http://localhost:8080/oauth2/authorization/google")}>
+        Continue with Google
+      </button>
+
+      <br />
+
+      <button onClick={() => (window.location.href = "http://localhost:8080/oauth2/authorization/github")}>
+        Continue with GitHub
+      </button>
+
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Nodes from "./pages/Nodes";
 import FileEditor from "./pages/FileEditor";
 import Invitations from "./pages/Invitations";
 import Register from "./pages/Register";
+import OAuthCallback from "./pages/OAuthCallback";
 
 function App() {
   return (
@@ -23,6 +24,8 @@ function App() {
       <Route path="/repos/:repoId/files/:fileId" element={<FileEditor />} />
 
       <Route path="/invitations" element={<Invitations />} />
+
+      <Route path="/oauth-callback" element={<OAuthCallback />} />
 
     </Routes>
   );
