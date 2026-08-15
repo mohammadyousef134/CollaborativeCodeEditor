@@ -1,6 +1,14 @@
-version: "3.8"
 
 services:
+  piston:
+    image: ghcr.io/engineer-man/piston
+    container_name: code_editor_piston
+    restart: always
+    privileged: true
+    ports:
+      - "2000:2000"
+    volumes:
+      - piston_data:/piston
   mysql:
     image: mysql:8.0
     container_name: code_editor_mysql
@@ -18,6 +26,7 @@ services:
     container_name: code_editor_backend
     depends_on:
       - mysql
+      - piston
     ports:
       - "8080:8080"
     environment:
@@ -29,3 +38,4 @@ services:
 
 volumes:
   mysql_data:
+  piston_data:
