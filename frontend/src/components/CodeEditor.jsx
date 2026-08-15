@@ -18,6 +18,8 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
   const currentContentRef = useRef(initialContent ?? "");
   const lastSavedContentRef = useRef(initialContent ?? "");
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [running, setRunning] = useState(false);
+  const [output, setOutput] = useState(null);
 
   function scheduleSave(content) {
     if (saveTimeoutRef.current) {
@@ -111,6 +113,29 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
     bindingRef.current = binding;
   }
 
+  async function runCode() {
+    setRunning(true);
+    setOutput(null);
+
+    try {
+      if (currentContentRef.current !== lastSavedContentRef.current) {
+        await api.put(savePathRef.current, { content: currentContentRef.current });
+        lastSavedContentRef.current = currentContentRef.current;
+      }
+
+      const res = await api.post(`/api/repos/${repoId}/nodes/${fileId}/execute`);
+      setOutput(res.data);
+    } catch (error) {
+      setOutput({
+        stdout: "",
+        stderr: error.response?.data?.message || "Failed to run code",
+        exitCode: null
+      });
+    } finally {
+      setRunning(false);
+    }
+  }
+
   useEffect(() => {
     const savePath = savePathRef.current;
 
@@ -150,6 +175,12 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
           </span>
         )}
 
+        {!readOnly && (
+          <button onClick={runCode} disabled={running} style={{ marginLeft: "auto" }}>
+            {running ? "Running..." : "Run"}
+          </button>
+        )}
+
         <div style={{ display: "flex" }}>
           {onlineUsers.map((user, i) => (
             <div
@@ -178,12 +209,37 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
       </div>
 
       <Editor
-        height="90vh"
+        height="70vh"
         language={language}
         theme="vs-dark"
         onMount={handleEditorDidMount}
         options={{ readOnly: !!readOnly }}
       />
+
+      {output !== null && (
+        <div style={{
+          background: "#1e1e1e",
+          borderTop: "1px solid #333",
+          padding: 10,
+          fontFamily: "monospace",
+          fontSize: 13,
+          height: "20vh",
+          overflowY: "auto"
+        }}>
+          {output.stdout && (
+            <pre style={{ color: "#ddd", margin: 0, whiteSpace: "pre-wrap" }}>{output.stdout}</pre>
+          )}
+          {output.stderr && (
+            <pre style={{ color: "#e06c75", margin: 0, whiteSpace: "pre-wrap" }}>{output.stderr}</pre>
+          )}
+          {!output.stdout && !output.stderr && (
+            <span style={{ color: "#666" }}>(no output)</span>
+          )}
+          {output.exitCode !== null && output.exitCode !== undefined && (
+            <div style={{ color: "#666", marginTop: 6 }}>Exit code: {output.exitCode}</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
