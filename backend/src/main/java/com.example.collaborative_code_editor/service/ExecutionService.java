@@ -29,6 +29,15 @@ public class ExecutionService {
 
     private static final String PISTON_URL = "http://piston:2000";
 
+    private record RuntimeSpec(String pistonLanguage, String version, String extension) {}
+
+    private static final Map<String, RuntimeSpec> RUNTIMES = Map.of(
+            "python", new RuntimeSpec("python", "3.10.0", ".py"),
+            "cpp", new RuntimeSpec("c++", "10.2.0", ".cpp"),
+            "csharp", new RuntimeSpec("csharp", "6.12.0", ".cs")
+    );
+
+
     private Repo getRepoWithAccess(Long repoId, Long userId) {
         Repo repo = repoRepository.findById(repoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Repo not found"));
@@ -54,30 +63,34 @@ public class ExecutionService {
         if (entryNode.getType() != NodeType.FILE || entryNode.getBlob() == null) {
             throw new ForbiddenException("Node is not an executable file");
         }
-        if (!"python".equals(entryNode.getBlob().getLanguage())) {
-            throw new ForbiddenException("Only Python execution is supported right now");
+
+        String language = entryNode.getBlob().getLanguage();
+        RuntimeSpec spec = RUNTIMES.get(language);
+        if (spec == null) {
+            throw new ForbiddenException("Unsupported language for execution: " + language);
         }
 
         List<Map<String, Object>> files = new ArrayList<>();
 
         files.add(Map.of(
-                "name", relativePath(entryNode, byId),
+                "name", relativePath(entryNode, byId, language, spec.extension()),
                 "content", entryNode.getBlob().getContent()
         ));
 
         for (Node n : allNodes) {
             if (n.getId().equals(entryNode.getId())) continue;
             if (n.getType() != NodeType.FILE || n.getBlob() == null) continue;
+            if (!language.equals(n.getBlob().getLanguage())) continue;
 
             files.add(Map.of(
-                    "name", relativePath(n, byId),
+                    "name", relativePath(n, byId, language, spec.extension()),
                     "content", n.getBlob().getContent()
             ));
         }
 
         Map<String, Object> body = Map.of(
-                "language", "python",
-                "version", "3.10.0",
+                "language", spec.pistonLanguage(),
+                "version", spec.version(),
                 "files", files
         );
 
@@ -98,13 +111,25 @@ public class ExecutionService {
     }
 
 
-    private String relativePath(Node node, Map<Long, Node> byId) {
-        List<String> parts = new ArrayList<>();
-        Node current = node;
+    private String relativePath(Node node, Map<Long, Node> byId, String language, String extension) {
+        List<String> folderParts = new ArrayList<>();
+        Node current = node.getParent() == null ? null : byId.get(node.getParent().getId());
         while (current != null) {
-            parts.add(0, current.getName());
+            folderParts.add(0, current.getName());
             current = current.getParent() == null ? null : byId.get(current.getParent().getId());
         }
-        return String.join("/", parts);
+
+        String fileName = resolveFileName(node, language, extension);
+        folderParts.add(fileName);
+        return String.join("/", folderParts);
     }
+
+    private String resolveFileName(Node node, String language, String extension) {
+        return ensureExtension(node.getName(), extension);
+    }
+
+    private String ensureExtension(String name, String extension) {
+        return name.toLowerCase().endsWith(extension.toLowerCase()) ? name : name + extension;
+    }
+
 }
