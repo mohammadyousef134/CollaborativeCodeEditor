@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../api/api";
+import { useToast } from "../components/ToastProvider";
+import PromptModal from "../components/PromptModal";
 
 function Nodes() {
   const { repoId, folderId } = useParams();
   const navigate = useNavigate();
+  const showToast = useToast();
 
   const [newNodeType, setNewNodeType] = useState("FILE");
   const [nodes, setNode] = useState([]);
@@ -13,6 +16,9 @@ function Nodes() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("EDITOR");
   const [language, setLanguage] = useState("cpp");
+
+  const [renameTarget, setRenameTarget] = useState(null);
+  const [moveTarget, setMoveTarget] = useState(null);
 
   useEffect(() => {
     loadNodes();
@@ -24,9 +30,9 @@ function Nodes() {
     try {
       await api.post(`/api/repos/${repoId}/invite`, { email: inviteEmail, role: inviteRole });
       setInviteEmail("");
-      alert("Invitation sent");
+      showToast("Invitation sent", "success");
     } catch (err) {
-      alert(err.response?.data || "Failed to send invitation");
+      showToast(err.response?.data || "Failed to send invitation", "error");
     }
   };
 
@@ -65,42 +71,50 @@ function Nodes() {
   const createNode = async () => {
     if (!newNodeName.trim()) return;
 
-    await api.post(`/api/repos/${repoId}/nodes`, {
-      name: newNodeName,
-      type: newNodeType,
-      language: newNodeType === "FILE" ? language : undefined,
-      parentId: folderId || null
-    });
+    try {
+      await api.post(`/api/repos/${repoId}/nodes`, {
+        name: newNodeName,
+        type: newNodeType,
+        language: newNodeType === "FILE" ? language : undefined,
+        parentId: folderId || null
+      });
 
-    setNewNodeName("");
-    loadNodes();
+      setNewNodeName("");
+      loadNodes();
+    } catch (err) {
+      showToast(err.response?.data || "Failed to create node", "error");
+    }
   };
 
   const deleteNode = async (id) => {
-    await api.delete(`/api/repos/${repoId}/nodes/${id}`);
-    loadNodes();
+    try {
+      await api.delete(`/api/repos/${repoId}/nodes/${id}`);
+      loadNodes();
+    } catch (err) {
+      showToast(err.response?.data || "Failed to delete", "error");
+    }
   };
 
-  const renameNode = async (node) => {
-    const newName = prompt("New name:", node.name);
-    if (newName === null) return; // cancelled
-    if (!newName.trim() || newName === node.name) return;
+  const confirmRename = async (newName) => {
+    const node = renameTarget;
+    setRenameTarget(null);
+    if (!newName?.trim() || newName === node.name) return;
 
     try {
       await api.patch(`/api/repos/${repoId}/nodes/${node.id}/rename`, { name: newName });
       loadNodes();
     } catch (err) {
-      alert(err.response?.data || "Failed to rename");
+      showToast(err.response?.data || "Failed to rename", "error");
     }
   };
 
-  const moveNode = async (node) => {
-    const input = prompt("Target folder ID (leave empty for repo root):", "");
-    if (input === null) return; // cancelled
+  const confirmMove = async (input) => {
+    const node = moveTarget;
+    setMoveTarget(null);
 
     const parentId = input.trim() === "" ? null : Number(input.trim());
     if (parentId !== null && Number.isNaN(parentId)) {
-      alert("Folder ID must be a number");
+      showToast("Folder ID must be a number", "error");
       return;
     }
 
@@ -108,7 +122,7 @@ function Nodes() {
       await api.patch(`/api/repos/${repoId}/nodes/${node.id}/move`, { parentId });
       loadNodes();
     } catch (err) {
-      alert(err.response?.data || "Failed to move");
+      showToast(err.response?.data || "Failed to move", "error");
     }
   };
 
@@ -190,13 +204,33 @@ function Nodes() {
             </span>
 
             <div className="row">
-              <button className="btn-ghost" onClick={() => renameNode(node)}>Rename</button>
-              <button className="btn-ghost" onClick={() => moveNode(node)}>Move</button>
+              <button className="btn-ghost" onClick={() => setRenameTarget(node)}>Rename</button>
+              <button className="btn-ghost" onClick={() => setMoveTarget(node)}>Move</button>
               <button className="btn-danger" onClick={() => deleteNode(node.id)}>Delete</button>
             </div>
           </div>
         ))}
       </div>
+
+      <PromptModal
+        open={renameTarget !== null}
+        title={`Rename "${renameTarget?.name ?? ""}"`}
+        label="New name"
+        defaultValue={renameTarget?.name ?? ""}
+        confirmLabel="Rename"
+        onCancel={() => setRenameTarget(null)}
+        onConfirm={confirmRename}
+      />
+
+      <PromptModal
+        open={moveTarget !== null}
+        title={`Move "${moveTarget?.name ?? ""}"`}
+        label="Target folder ID (leave empty for repo root)"
+        defaultValue=""
+        confirmLabel="Move"
+        onCancel={() => setMoveTarget(null)}
+        onConfirm={confirmMove}
+      />
     </div>
   );
 }
