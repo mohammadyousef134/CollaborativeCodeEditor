@@ -165,20 +165,21 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
         alignItems: "center",
         gap: 8,
         padding: "8px 10px",
-        background: "#252526"
+        background: "var(--panel)",
+        borderBottom: "1px solid var(--border)"
       }}>
-        <span style={{ color: "#888", fontSize: 12 }}>
+        <span className="text-muted" style={{ fontSize: 12 }}>
           {onlineUsers.length <= 1 ? "Only you" : `${onlineUsers.length} online`}
         </span>
 
         {readOnly && (
-          <span style={{ color: "#e5c07b", fontSize: 12, fontWeight: 600 }}>
+          <span className="badge badge-warning">
             View only
           </span>
         )}
 
         {!readOnly && EXECUTABLE_LANGUAGES.includes(language) && (
-          <button onClick={runCode} disabled={running} style={{ marginLeft: "auto" }}>
+          <button className="btn-primary" onClick={runCode} disabled={running} style={{ marginLeft: "auto" }}>
             {running ? "Running..." : "Run"}
           </button>
         )}
@@ -199,7 +200,7 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
                 justifyContent: "center",
                 fontSize: 11,
                 fontWeight: 600,
-                border: "2px solid #252526",
+                border: "2px solid var(--panel)",
                 marginLeft: i === 0 ? 0 : -8,
                 cursor: "default"
               }}
@@ -220,25 +221,25 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
 
       {output !== null && (
         <div style={{
-          background: "#1e1e1e",
-          borderTop: "1px solid #333",
+          background: "var(--bg)",
+          borderTop: "1px solid var(--border)",
           padding: 10,
-          fontFamily: "monospace",
+          fontFamily: "var(--font-display)",
           fontSize: 13,
           height: "20vh",
           overflowY: "auto"
         }}>
           {output.stdout && (
-            <pre style={{ color: "#ddd", margin: 0, whiteSpace: "pre-wrap" }}>{output.stdout}</pre>
+            <pre style={{ color: "var(--text)", margin: 0, whiteSpace: "pre-wrap" }}>{output.stdout}</pre>
           )}
           {output.stderr && (
-            <pre style={{ color: "#e06c75", margin: 0, whiteSpace: "pre-wrap" }}>{output.stderr}</pre>
+            <pre style={{ color: "var(--danger)", margin: 0, whiteSpace: "pre-wrap" }}>{output.stderr}</pre>
           )}
           {!output.stdout && !output.stderr && (
-            <span style={{ color: "#666" }}>(no output)</span>
+            <span className="text-muted">(no output)</span>
           )}
           {output.exitCode !== null && output.exitCode !== undefined && (
-            <div style={{ color: "#666", marginTop: 6 }}>Exit code: {output.exitCode}</div>
+            <div className="text-muted" style={{ marginTop: 6 }}>Exit code: {output.exitCode}</div>
           )}
         </div>
       )}

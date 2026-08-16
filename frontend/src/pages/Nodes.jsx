@@ -121,75 +121,82 @@ function Nodes() {
   };
 
   return (
-    <div>
-      <h3>Invite collaborator</h3>
-      <input
-        placeholder="User email"
-        value={inviteEmail}
-        onChange={(e) => setInviteEmail(e.target.value)}
-      />
-      <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
-        <option value="VIEWER">Viewer</option>
-        <option value="EDITOR">Editor</option>
-        <option value="ADMIN">Admin</option>
-      </select>
-      <button onClick={inviteUser}>Invite</button>
+    <div className="page-wide">
+      <div className="card" style={{ marginBottom: 20 }}>
+        <h3 style={{ marginBottom: 12 }}>Invite collaborator</h3>
+        <div className="row">
+          <input
+            placeholder="User email"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            style={{ flex: 1 }}
+          />
+          <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
+            <option value="VIEWER">Viewer</option>
+            <option value="EDITOR">Editor</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+          <button className="btn-primary" onClick={inviteUser}>Invite</button>
+        </div>
+      </div>
 
-      <hr />
-
-      <div>
+      <div className="row" style={{ marginBottom: 16, fontFamily: "var(--font-display)", fontSize: 13 }}>
         <Link to={`/repos/${repoId}/nodes`}>Home</Link>
         {breadcrumbs.map((crumb) => (
-          <span key={crumb.id}>
-            {" / "}
+          <span key={crumb.id} className="row" style={{ gap: 8 }}>
+            <span className="text-muted">/</span>
             <Link to={`/repos/${repoId}/nodes/${crumb.id}`}>{crumb.name}</Link>
           </span>
         ))}
       </div>
 
-      <hr />
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="row">
+          <input
+            placeholder="New node name"
+            value={newNodeName}
+            onChange={(e) => setNewNodeName(e.target.value)}
+            style={{ flex: 1 }}
+          />
 
-      <h3>Nodes</h3>
+          <select value={newNodeType} onChange={(e) => setNewNodeType(e.target.value)}>
+            <option value="FILE">File</option>
+            <option value="FOLDER">Folder</option>
+          </select>
 
-      <input
-        placeholder="New node name"
-        value={newNodeName}
-        onChange={(e) => setNewNodeName(e.target.value)}
-      />
+          {newNodeType === "FILE" && (
+            <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+              <option value="python">Python</option>
+              <option value="cpp">C++</option>
+              <option value="csharp">C#</option>
+            </select>
+          )}
 
-      <select value={newNodeType} onChange={(e) => setNewNodeType(e.target.value)}>
-        <option value="FILE">File</option>
-        <option value="FOLDER">Folder</option>
-      </select>
-
-      {newNodeType === "FILE" && (
-        <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-          <option value="python">Python</option>
-          <option value="cpp">C++</option>
-          <option value="csharp">C#</option>
-        </select>
-      )}
-
-      <button onClick={createNode}>Create Node</button>
-
-      <hr />
-
-      {nodes.map((node) => (
-        <div key={node.id}>
-          <span
-            onClick={() => openNode(node)}
-            style={{ cursor: "pointer", marginRight: "10px" }}
-          >
-            {node.type === "FOLDER" ? "📁" : "📄"} {node.name}
-          </span>
-
-          <button onClick={() => renameNode(node)}>Rename</button>
-          <button onClick={() => moveNode(node)}>Move</button>
-          <button onClick={() => deleteNode(node.id)}>Delete</button>
+          <button className="btn-primary" onClick={createNode}>Create</button>
         </div>
-      ))}
+      </div>
 
-      <hr />
+      <div className="card" style={{ padding: 0 }}>
+        {nodes.length === 0 && (
+          <div style={{ padding: 20 }} className="text-muted">
+            Empty — create a file or folder above.
+          </div>
+        )}
+
+        {nodes.map((node) => (
+          <div key={node.id} className="node-row">
+            <span className="node-name" onClick={() => openNode(node)}>
+              {node.type === "FOLDER" ? "📁" : "📄"} {node.name}
+            </span>
+
+            <div className="row">
+              <button className="btn-ghost" onClick={() => renameNode(node)}>Rename</button>
+              <button className="btn-ghost" onClick={() => moveNode(node)}>Move</button>
+              <button className="btn-danger" onClick={() => deleteNode(node.id)}>Delete</button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
