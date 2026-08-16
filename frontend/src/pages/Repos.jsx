@@ -36,43 +36,50 @@ function Repos() {
   };
 
   return (
-    <div>
+    <div className="page-wide">
+      <div className="row-between" style={{ marginBottom: 20 }}>
+        <h2 style={{ margin: 0 }}>Repositories</h2>
+        <button className="btn-ghost" onClick={() => navigate("/invitations")}>
+          Invitations
+        </button>
+      </div>
 
-      <h2>Repositories</h2>
-
-      <input
-        placeholder="New Repository name"
-        value={newRepoName}
-        onChange={(e) => setNewRepoName(e.target.value)}
-      />
-
-      <button onClick={createRepo}>
-        Create Repository
-      </button>
-
-      <hr />
-
-      {repos.map(repo => (
-        <div key={repo.id}>
-
-          <span
-            onClick={() => navigate(`/repos/${repo.id}/nodes`)}
-            style={{ cursor: "pointer", marginRight: "10px" }}
-          >
-            {repo.name}
-          </span>
-
-          <button onClick={() => deleteRepo(repo.id)}>
-            Delete
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="row">
+          <input
+            placeholder="New repository name"
+            value={newRepoName}
+            onChange={(e) => setNewRepoName(e.target.value)}
+            style={{ flex: 1 }}
+          />
+          <button className="btn-primary" onClick={createRepo}>
+            Create
           </button>
-
         </div>
-      ))}
+      </div>
 
-      <button onClick={() => navigate("/invitations")}>
-        Invitations
-      </button>
+      <div className="card" style={{ padding: 0 }}>
+        {repos.length === 0 && (
+          <div style={{ padding: 20 }} className="text-muted">
+            No repositories yet — create one above.
+          </div>
+        )}
 
+        {repos.map(repo => (
+          <div key={repo.id} className="node-row">
+            <span
+              className="node-name"
+              onClick={() => navigate(`/repos/${repo.id}/nodes`)}
+            >
+              {repo.name}
+            </span>
+
+            <button className="btn-danger" onClick={() => deleteRepo(repo.id)}>
+              Delete
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

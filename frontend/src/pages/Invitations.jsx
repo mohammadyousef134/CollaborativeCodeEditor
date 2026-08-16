@@ -34,42 +34,38 @@ function Invitations() {
   };
 
   return (
-    <div>
-
+    <div className="page-wide">
       <h2>Invitations</h2>
 
-      {invitations.length === 0 && <p>No invitations</p>}
+      {invitations.length === 0 && (
+        <div className="card text-muted">No invitations</div>
+      )}
 
-      {invitations.map(inv => (
+      <div className="stack">
+        {invitations.map(inv => (
+          <div key={inv.invitationId} className="card">
+            <div className="row-between" style={{ marginBottom: 10 }}>
+              <span className="mono" style={{ fontSize: 15, fontWeight: 600 }}>
+                {inv.repoName}
+              </span>
+              <span className="badge badge-success">{inv.role}</span>
+            </div>
 
-        <div key={inv.invitationId}>
+            <p className="text-muted" style={{ margin: "0 0 16px 0" }}>
+              Invited by {inv.invitedBy}
+            </p>
 
-          <p>
-            Repository: <b>{inv.repoName}</b>
-          </p>
-
-          <p>
-            Invited by: {inv.invitedBy}
-          </p>
-
-          <p>
-            Role: {inv.role}
-          </p>
-
-          <button onClick={() => acceptInvitation(inv.invitationId)}>
-            Accept
-          </button>
-
-          <button onClick={() => declineInvitation(inv.invitationId)}>
-            Decline
-          </button>
-
-          <hr />
-
-        </div>
-
-      ))}
-
+            <div className="row">
+              <button className="btn-primary" onClick={() => acceptInvitation(inv.invitationId)}>
+                Accept
+              </button>
+              <button className="btn-danger" onClick={() => declineInvitation(inv.invitationId)}>
+                Decline
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

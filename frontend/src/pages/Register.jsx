@@ -40,45 +40,46 @@ function Register() {
   };
 
   return (
-    <div>
+    <div className="page">
+      <div className="card stack">
+        <h2>Create an account</h2>
 
-      <h2>Register</h2>
+        <div className="stack" style={{ gap: 6 }}>
+          <label>Name</label>
+          <input
+            placeholder="Mohammad"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
 
-      <input
-        placeholder="name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
+        <div className="stack" style={{ gap: 6 }}>
+          <label>Email</label>
+          <input
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
 
-      <br />
+        <div className="stack" style={{ gap: 6 }}>
+          <label>Password</label>
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
 
-      <input
-        placeholder="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+        <button className="btn-primary" onClick={handleRegister}>
+          Create account
+        </button>
 
-      <br />
-
-      <input
-        type="password"
-        placeholder="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-
-      <br />
-
-      <button onClick={handleRegister}>
-        Register
-      </button>
-
-      <br />
-
-      <button onClick={() => navigate("/")}>
-        Back to login
-      </button>
-
+        <button className="btn-ghost" onClick={() => navigate("/")}>
+          Back to sign in
+        </button>
+      </div>
     </div>
   );
 }

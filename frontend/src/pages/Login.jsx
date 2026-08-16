@@ -7,7 +7,7 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const navigate = useNavigate();   
+  const navigate = useNavigate();
 
   const handleLogin = async () => {
 
@@ -22,8 +22,6 @@ function Login() {
 
       localStorage.setItem("token", token);
 
-      alert("Login successful");
-
       navigate("/repos");
 
     } catch (error) {
@@ -35,50 +33,49 @@ function Login() {
   };
 
   return (
-    <div>
+    <div className="page">
+      <div className="card stack">
+        <h2>Sign in</h2>
 
-      <h2>Login</h2>
+        <div className="stack" style={{ gap: 6 }}>
+          <label>Email</label>
+          <input
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
 
-      <input
-        placeholder="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+        <div className="stack" style={{ gap: 6 }}>
+          <label>Password</label>
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
 
-      <br />
+        <button className="btn-primary" onClick={handleLogin}>
+          Sign in
+        </button>
 
-      <input
-        type="password"
-        placeholder="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <button className="btn-ghost" onClick={() => navigate("/register")}>
+          Create an account
+        </button>
 
-      <br />
+        <hr className="divider" />
 
-      <button onClick={handleLogin}>
-        Login
-      </button>
+        <div className="stack">
+          <button onClick={() => (window.location.href = "http://localhost:8080/oauth2/authorization/google")}>
+            Continue with Google
+          </button>
 
-      <br />
-
-      <button onClick={() => navigate("/register")}>
-        Create an account
-      </button>
-
-      <br />
-      <br />
-
-      <button onClick={() => (window.location.href = "http://localhost:8080/oauth2/authorization/google")}>
-        Continue with Google
-      </button>
-
-      <br />
-
-      <button onClick={() => (window.location.href = "http://localhost:8080/oauth2/authorization/github")}>
-        Continue with GitHub
-      </button>
-
+          <button onClick={() => (window.location.href = "http://localhost:8080/oauth2/authorization/github")}>
+            Continue with GitHub
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
