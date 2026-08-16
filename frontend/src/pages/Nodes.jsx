@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../api/api";
 import { useToast } from "../components/ToastProvider";
 import PromptModal from "../components/PromptModal";
+import ConfirmModal from "../components/ConfirmModal";
 
 function Nodes() {
   const { repoId, folderId } = useParams();
@@ -19,6 +20,7 @@ function Nodes() {
 
   const [renameTarget, setRenameTarget] = useState(null);
   const [moveTarget, setMoveTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   useEffect(() => {
     loadNodes();
@@ -93,6 +95,12 @@ function Nodes() {
     } catch (err) {
       showToast(err.response?.data || "Failed to delete", "error");
     }
+  };
+
+  const confirmDelete = async () => {
+    const node = deleteTarget;
+    setDeleteTarget(null);
+    await deleteNode(node.id);
   };
 
   const confirmRename = async (newName) => {
@@ -206,7 +214,7 @@ function Nodes() {
             <div className="row">
               <button className="btn-ghost" onClick={() => setRenameTarget(node)}>Rename</button>
               <button className="btn-ghost" onClick={() => setMoveTarget(node)}>Move</button>
-              <button className="btn-danger" onClick={() => deleteNode(node.id)}>Delete</button>
+              <button className="btn-danger" onClick={() => setDeleteTarget(node)}>Delete</button>
             </div>
           </div>
         ))}
@@ -230,6 +238,19 @@ function Nodes() {
         confirmLabel="Move"
         onCancel={() => setMoveTarget(null)}
         onConfirm={confirmMove}
+      />
+
+      <ConfirmModal
+        open={deleteTarget !== null}
+        title={`Delete "${deleteTarget?.name ?? ""}"?`}
+        message={
+          deleteTarget?.type === "FOLDER"
+            ? "This will permanently delete the folder and everything inside it. This can't be undone."
+            : "This can't be undone."
+        }
+        confirmLabel="Delete"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
       />
     </div>
   );

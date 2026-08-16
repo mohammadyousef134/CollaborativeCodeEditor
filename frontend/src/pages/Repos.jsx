@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import api from "../api/api";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../components/ToastProvider";
+import ConfirmModal from "../components/ConfirmModal";
 
 function Repos() {
 
   const [repos, setRepos] = useState([]);
   const [newRepoName, setNewRepoName] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const navigate = useNavigate();
+  const showToast = useToast();
 
   useEffect(() => {
     loadRepos();
@@ -19,20 +23,28 @@ function Repos() {
 
   const createRepo = async () => {
     if (!newRepoName) return;
-    await api.post("/api/repos", {
-      name: newRepoName
-    });
+    try {
+      await api.post("/api/repos", {
+        name: newRepoName
+      });
 
-    setNewRepoName("");
-    loadRepos();
-
+      setNewRepoName("");
+      loadRepos();
+    } catch (err) {
+      showToast(err.response?.data || "Failed to create repository", "error");
+    }
   };
 
-  const deleteRepo = async (id) => {
+  const confirmDelete = async () => {
+    const repo = deleteTarget;
+    setDeleteTarget(null);
 
-    await api.delete(`/api/repos/${id}`);
-    loadRepos();
-
+    try {
+      await api.delete(`/api/repos/${repo.id}`);
+      loadRepos();
+    } catch (err) {
+      showToast(err.response?.data || "Failed to delete repository", "error");
+    }
   };
 
   return (
@@ -74,12 +86,21 @@ function Repos() {
               {repo.name}
             </span>
 
-            <button className="btn-danger" onClick={() => deleteRepo(repo.id)}>
+            <button className="btn-danger" onClick={() => setDeleteTarget(repo)}>
               Delete
             </button>
           </div>
         ))}
       </div>
+
+      <ConfirmModal
+        open={deleteTarget !== null}
+        title={`Delete "${deleteTarget?.name ?? ""}"?`}
+        message="This will permanently delete the repository, all its files and folders, and remove access for every collaborator. This can't be undone."
+        confirmLabel="Delete"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }
