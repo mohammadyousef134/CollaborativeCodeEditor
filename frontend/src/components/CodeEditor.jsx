@@ -3,6 +3,8 @@ import Editor from "@monaco-editor/react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { MonacoBinding } from "y-monaco";
+
+const EXECUTABLE_LANGUAGES = ["python", "cpp", "csharp"];
 import api from "../api/api";
 import { getCurrentUserId } from "../utils/Jwt";
 import { colorForUserId, initialsForName } from "../utils/Presence";
@@ -175,7 +177,7 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
           </span>
         )}
 
-        {!readOnly && (
+        {!readOnly && EXECUTABLE_LANGUAGES.includes(language) && (
           <button onClick={runCode} disabled={running} style={{ marginLeft: "auto" }}>
             {running ? "Running..." : "Run"}
           </button>

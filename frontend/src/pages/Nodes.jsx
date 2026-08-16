@@ -12,7 +12,7 @@ function Nodes() {
   const [newNodeName, setNewNodeName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("EDITOR");
-  const [language, setLanguage] = useState("javascript");
+  const [language, setLanguage] = useState("cpp");
 
   useEffect(() => {
     loadNodes();
@@ -164,10 +164,9 @@ function Nodes() {
 
       {newNodeType === "FILE" && (
         <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-          <option value="javascript">JavaScript</option>
           <option value="python">Python</option>
-          <option value="java">Java</option>
           <option value="cpp">C++</option>
+          <option value="csharp">C#</option>
         </select>
       )}
 
