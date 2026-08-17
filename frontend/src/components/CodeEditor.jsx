@@ -61,7 +61,7 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
     const ytext = ydoc.getText("monaco");
 
     const provider = new WebsocketProvider(
-      "ws://localhost:1234",
+      import.meta.env.VITE_WS_URL || "ws://localhost:1234",
       `file-${fileId}`,
       ydoc
     );

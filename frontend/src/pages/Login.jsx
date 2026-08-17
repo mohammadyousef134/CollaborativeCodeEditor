@@ -88,11 +88,11 @@ function Login() {
         <hr className="divider" />
 
         <div className="stack">
-          <button onClick={() => (window.location.href = "http://localhost:8080/oauth2/authorization/google")}>
+          <button onClick={() => (window.location.href = `${import.meta.env.VITE_API_URL || "http://localhost:8080"}/oauth2/authorization/google`)}>
             <GoogleIcon />Continue with Google
           </button>
 
-          <button onClick={() => (window.location.href = "http://localhost:8080/oauth2/authorization/github")}>
+          <button onClick={() => (window.location.href = `${import.meta.env.VITE_API_URL || "http://localhost:8080"}/oauth2/authorization/github`)}>
             <GitHubIcon />Continue with GitHub
           </button>
         </div>
