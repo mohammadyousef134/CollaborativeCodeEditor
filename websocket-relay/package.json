@@ -1,0 +1,13 @@
+{
+  "name": "collaborative-code-editor-websocket-relay",
+  "version": "1.0.0",
+  "private": true,
+  "main": "server.cjs",
+  "scripts": {
+    "start": "node server.cjs"
+  },
+  "dependencies": {
+    "ws": "^8.19.0",
+    "y-websocket": "^1.5.0"
+  }
+}

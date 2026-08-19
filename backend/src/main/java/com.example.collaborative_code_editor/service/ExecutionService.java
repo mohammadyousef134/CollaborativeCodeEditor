@@ -11,6 +11,7 @@ import com.example.collaborative_code_editor.repository.RepoMemberRepository;
 import com.example.collaborative_code_editor.repository.ReopRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -27,7 +28,8 @@ public class ExecutionService {
     @Autowired private RepoMemberRepository memberRepository;
     @Autowired private RestTemplate restTemplate;
 
-    private static final String PISTON_URL = "http://piston:2000";
+    @Value("${piston.url:http://piston:2000}")
+    private String PISTON_URL;
 
     private record RuntimeSpec(String pistonLanguage, String version, String extension) {}
 
