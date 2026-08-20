@@ -6,9 +6,11 @@ services:
     privileged: true
     volumes:
       - piston_data:/piston
+    ports:
+      - "2000:2000"
 
   backend:
-    build: ./backend
+    image: ghcr.io/mohammadyousef134/collaborativecodeeditor-backend:latest
     container_name: code_editor_backend
     restart: always
     depends_on:
@@ -32,7 +34,7 @@ services:
       PISTON_URL: http://piston:2000
 
   websocket:
-    build: ./websocket-relay
+    image: ghcr.io/mohammadyousef134/collaborativecodeeditor-websocket:latest
     container_name: code_editor_websocket
     restart: always
     ports:

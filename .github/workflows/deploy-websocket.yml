@@ -1,0 +1,45 @@
+name: Deploy Websocket
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "websocket-relay/**"
+      - ".github/workflows/deploy-websocket.yml"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push websocket image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./websocket-relay
+          push: true
+          tags: ghcr.io/mohammadyousef134/collaborativecodeeditor-websocket:latest
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/CollaborativeCodeEditor
+            docker compose pull websocket
+            docker compose up -d websocket
+            docker image prune -f
