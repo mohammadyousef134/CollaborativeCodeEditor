@@ -40,6 +40,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/CollaborativeCodeEditor
+            git pull
             docker compose pull websocket
             docker compose up -d websocket
             docker image prune -f

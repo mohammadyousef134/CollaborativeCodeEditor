@@ -6,8 +6,6 @@ services:
     privileged: true
     volumes:
       - piston_data:/piston
-    ports:
-      - "2000:2000"
 
   backend:
     image: ghcr.io/mohammadyousef134/collaborativecodeeditor-backend:latest
