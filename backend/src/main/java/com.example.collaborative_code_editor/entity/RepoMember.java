@@ -1,7 +1,6 @@
 package com.example.collaborative_code_editor.entity;
 
 import com.example.collaborative_code_editor.enums.MemberRole;
-import io.micrometer.core.annotation.Counted;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

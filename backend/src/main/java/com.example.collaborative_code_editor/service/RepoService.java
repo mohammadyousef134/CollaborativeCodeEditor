@@ -102,7 +102,11 @@ public class RepoService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if(memberRepo.existsByRepoIdAndUserId(repoId, user.getId())){
-            throw new RuntimeException("User already member");
+            throw new ForbiddenException("User is already a member of this repo");
+        }
+
+        if (invitationRepo.existsByRepoIdAndUserIdAndStatus(repoId, user.getId(), "PENDING")) {
+            throw new ForbiddenException("User already has a pending invitation to this repo");
         }
 
         RepoInvitation invitation = new RepoInvitation();
