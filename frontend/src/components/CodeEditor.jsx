@@ -22,6 +22,8 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [running, setRunning] = useState(false);
   const [output, setOutput] = useState(null);
+  const [stdin, setStdin] = useState("");
+  const [showStdin, setShowStdin] = useState(false);
 
   function scheduleSave(content) {
     if (saveTimeoutRef.current) {
@@ -125,7 +127,7 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
         lastSavedContentRef.current = currentContentRef.current;
       }
 
-      const res = await api.post(`/api/repos/${repoId}/nodes/${fileId}/execute`);
+      const res = await api.post(`/api/repos/${repoId}/nodes/${fileId}/execute`, { stdin });
       setOutput(res.data);
     } catch (error) {
       setOutput({
@@ -168,7 +170,7 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
         background: "var(--panel)",
         borderBottom: "1px solid var(--border)"
       }}>
-        <span className="text-muted" style={{ fontSize: 12 }}>
+        <span className="text-muted" style={{ fontSize: 12, flex: 1 }}>
           {onlineUsers.length <= 1 ? "Only you" : `${onlineUsers.length} online`}
         </span>
 
@@ -179,7 +181,13 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
         )}
 
         {!readOnly && EXECUTABLE_LANGUAGES.includes(language) && (
-          <button className="btn-primary" onClick={runCode} disabled={running} style={{ marginLeft: "auto" }}>
+          <button className="btn-ghost" onClick={() => setShowStdin(!showStdin)}>
+            {showStdin ? "Hide input" : "Input"}
+          </button>
+        )}
+
+        {!readOnly && EXECUTABLE_LANGUAGES.includes(language) && (
+          <button className="btn-primary" onClick={runCode} disabled={running}>
             {running ? "Running..." : "Run"}
           </button>
         )}
@@ -210,6 +218,29 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
           ))}
         </div>
       </div>
+
+      {showStdin && (
+        <div style={{ padding: "8px 10px", background: "var(--panel)", borderBottom: "1px solid var(--border)" }}>
+          <label style={{ display: "block", marginBottom: 4 }}>Stdin</label>
+          <textarea
+            value={stdin}
+            onChange={(e) => setStdin(e.target.value)}
+            placeholder="Input passed to your program's stdin"
+            rows={3}
+            style={{
+              width: "100%",
+              background: "var(--bg)",
+              color: "var(--text)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius)",
+              padding: 8,
+              fontFamily: "var(--font-display)",
+              fontSize: 13,
+              resize: "vertical"
+            }}
+          />
+        </div>
+      )}
 
       <Editor
         height="70vh"

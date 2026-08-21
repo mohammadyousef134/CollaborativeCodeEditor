@@ -48,7 +48,7 @@ public class ExecutionService {
         throw new ForbiddenException("You cannot access this repo");
     }
 
-    public ExecutionResult execute(Long repoId, Long fileId, Long userId) {
+    public ExecutionResult execute(Long repoId, Long fileId, Long userId, String stdin) {
         getRepoWithAccess(repoId, userId);
 
         List<Node> allNodes = nodeRepository.findByRepoId(repoId);
@@ -93,7 +93,8 @@ public class ExecutionService {
         Map<String, Object> body = Map.of(
                 "language", spec.pistonLanguage(),
                 "version", spec.version(),
-                "files", files
+                "files", files,
+                "stdin", stdin == null ? "" : stdin
         );
 
         Map<String, Object> response = restTemplate.postForObject(
