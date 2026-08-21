@@ -1,48 +1,60 @@
 import { useEffect, useState } from "react";
 import api from "../api/api";
+import { useToast } from "../components/ToastProvider";
 
 function Invitations() {
 
   const [invitations, setInvitations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const showToast = useToast();
 
   useEffect(() => {
     loadInvitations();
   }, []);
 
   const loadInvitations = async () => {
-
-    const res = await api.get("/invitations");
-
-    setInvitations(res.data);
-
+    try {
+      const res = await api.get("/invitations");
+      setInvitations(res.data);
+    } catch (err) {
+      showToast(err.response?.data || "Failed to load invitations", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const acceptInvitation = async (id) => {
-
-    await api.post(`/invitations/${id}/accept`);
-
-    loadInvitations();
-
+    try {
+      await api.post(`/invitations/${id}/accept`);
+      loadInvitations();
+    } catch (err) {
+      showToast(err.response?.data || "Failed to accept invitation", "error");
+    }
   };
 
   const declineInvitation = async (id) => {
-
-    await api.post(`/invitations/${id}/decline`);
-
-    loadInvitations();
-
+    try {
+      await api.post(`/invitations/${id}/decline`);
+      loadInvitations();
+    } catch (err) {
+      showToast(err.response?.data || "Failed to decline invitation", "error");
+    }
   };
 
   return (
     <div className="page-wide">
       <h2>Invitations</h2>
 
-      {invitations.length === 0 && (
+      {loading && (
+        <div className="card text-muted">Loading...</div>
+      )}
+
+      {!loading && invitations.length === 0 && (
         <div className="card text-muted">No invitations</div>
       )}
 
       <div className="stack">
-        {invitations.map(inv => (
+        {!loading && invitations.map(inv => (
           <div key={inv.invitationId} className="card">
             <div className="row-between" style={{ marginBottom: 10 }}>
               <span className="mono" style={{ fontSize: 15, fontWeight: 600 }}>

@@ -24,6 +24,8 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
   const [output, setOutput] = useState(null);
   const [stdin, setStdin] = useState("");
   const [showStdin, setShowStdin] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
+  const savedFlashTimeoutRef = useRef(null);
 
   function scheduleSave(content) {
     if (saveTimeoutRef.current) {
@@ -36,10 +38,17 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
       try {
         await api.put(savePathRef.current, { content });
         lastSavedContentRef.current = content;
+        flashSaved();
       } catch (error) {
         console.error("Failed to save document", error);
       }
     }, SAVE_DELAY_MS);
+  }
+
+  function flashSaved() {
+    setShowSaved(true);
+    if (savedFlashTimeoutRef.current) clearTimeout(savedFlashTimeoutRef.current);
+    savedFlashTimeoutRef.current = setTimeout(() => setShowSaved(false), 1500);
   }
 
   function teardownConnection() {
@@ -147,6 +156,9 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
+      if (savedFlashTimeoutRef.current) {
+        clearTimeout(savedFlashTimeoutRef.current);
+      }
 
       if (currentContentRef.current !== lastSavedContentRef.current) {
         api.put(savePath, { content: currentContentRef.current }).catch((error) => {
@@ -173,6 +185,12 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
         <span className="text-muted" style={{ fontSize: 12, flex: 1 }}>
           {onlineUsers.length <= 1 ? "Only you" : `${onlineUsers.length} online`}
         </span>
+
+        {!readOnly && showSaved && (
+          <span className="text-muted" style={{ fontSize: 12, opacity: 0.7 }}>
+            Saved
+          </span>
+        )}
 
         {readOnly && (
           <span className="badge badge-warning">

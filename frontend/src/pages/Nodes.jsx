@@ -12,6 +12,7 @@ function Nodes() {
 
   const [newNodeType, setNewNodeType] = useState("FILE");
   const [nodes, setNode] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const [newNodeName, setNewNodeName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -23,6 +24,7 @@ function Nodes() {
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   useEffect(() => {
+    setLoading(true);
     loadNodes();
     loadBreadcrumbs();
   }, [repoId, folderId]);
@@ -46,7 +48,9 @@ function Nodes() {
       const res = await api.get(url);
       setNode(res.data);
     } catch (err) {
-      console.error("Failed to load nodes", err);
+      showToast(err.response?.data || "Failed to load nodes", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -199,13 +203,17 @@ function Nodes() {
       </div>
 
       <div className="card" style={{ padding: 0 }}>
-        {nodes.length === 0 && (
+        {loading && (
+          <div style={{ padding: 20 }} className="text-muted">Loading...</div>
+        )}
+
+        {!loading && nodes.length === 0 && (
           <div style={{ padding: 20 }} className="text-muted">
             Empty — create a file or folder above.
           </div>
         )}
 
-        {nodes.map((node) => (
+        {!loading && nodes.map((node) => (
           <div key={node.id} className="node-row">
             <span className="node-name" onClick={() => openNode(node)}>
               {node.type === "FOLDER" ? "📁" : "📄"} {node.name}

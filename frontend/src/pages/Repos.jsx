@@ -7,6 +7,7 @@ import ConfirmModal from "../components/ConfirmModal";
 function Repos() {
 
   const [repos, setRepos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [newRepoName, setNewRepoName] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const navigate = useNavigate();
@@ -17,8 +18,14 @@ function Repos() {
   }, []);
 
   const loadRepos = async () => {
-    const res = await api.get("/api/repos");
-    setRepos(res.data);
+    try {
+      const res = await api.get("/api/repos");
+      setRepos(res.data);
+    } catch (err) {
+      showToast(err.response?.data || "Failed to load repositories", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const createRepo = async () => {
@@ -71,13 +78,17 @@ function Repos() {
       </div>
 
       <div className="card" style={{ padding: 0 }}>
-        {repos.length === 0 && (
+        {loading && (
+          <div style={{ padding: 20 }} className="text-muted">Loading...</div>
+        )}
+
+        {!loading && repos.length === 0 && (
           <div style={{ padding: 20 }} className="text-muted">
             No repositories yet — create one above.
           </div>
         )}
 
-        {repos.map(repo => (
+        {!loading && repos.map(repo => (
           <div key={repo.id} className="node-row">
             <span
               className="node-name"
