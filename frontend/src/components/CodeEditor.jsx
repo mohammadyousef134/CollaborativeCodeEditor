@@ -7,9 +7,49 @@ import { MonacoBinding } from "y-monaco";
 const EXECUTABLE_LANGUAGES = ["python", "cpp", "csharp"];
 import api from "../api/api";
 import { getCurrentUserId } from "../utils/Jwt";
-import { colorForUserId, initialsForName } from "../utils/Presence";
+import { colorForUserId, colorLightForUserId, initialsForName } from "../utils/Presence";
 
 const SAVE_DELAY_MS = 1000;
+const CURSOR_STYLE_TAG_ID = "yjs-remote-cursor-styles";
+
+function syncRemoteCursorStyles(awareness) {
+  let styleEl = document.getElementById(CURSOR_STYLE_TAG_ID);
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.id = CURSOR_STYLE_TAG_ID;
+    document.head.appendChild(styleEl);
+  }
+
+  const rules = [];
+  awareness.getStates().forEach((state, clientId) => {
+    const user = state.user;
+    if (!user || !user.color) return;
+
+    rules.push(`
+      .yRemoteSelection-${clientId} {
+        background-color: ${user.colorLight || user.color};
+      }
+      .yRemoteSelectionHead-${clientId} {
+        position: absolute;
+        border-left: ${user.color} solid 2px;
+        border-top: ${user.color} solid 2px;
+        border-bottom: ${user.color} solid 2px;
+        height: 100%;
+        box-sizing: border-box;
+      }
+      .yRemoteSelectionHead-${clientId}::after {
+        position: absolute;
+        content: ' ';
+        border: 3px solid ${user.color};
+        border-radius: 4px;
+        left: -4px;
+        top: -5px;
+      }
+    `);
+  });
+
+  styleEl.textContent = rules.join("\n");
+}
 
 function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
   const ydocRef = useRef(null);
@@ -59,6 +99,7 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
     providerRef.current = null;
     ydocRef.current = null;
     setOnlineUsers([]);
+    document.getElementById(CURSOR_STYLE_TAG_ID)?.remove();
   }
 
   function handleEditorDidMount(editor) {
@@ -84,10 +125,17 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
     api.get("/auth/me").then((res) => {
       provider.awareness.setLocalStateField("user", {
         id: res.data.id,
-        name: res.data.name
+        name: res.data.name,
+        color: colorForUserId(res.data.id),
+        colorLight: colorLightForUserId(res.data.id)
       });
     }).catch(() => {
-      provider.awareness.setLocalStateField("user", { id: userId, name: null });
+      provider.awareness.setLocalStateField("user", {
+        id: userId,
+        name: null,
+        color: colorForUserId(userId),
+        colorLight: colorLightForUserId(userId)
+      });
     });
 
     provider.awareness.on("change", () => {
@@ -96,6 +144,7 @@ function CodeEditor({ repoId, fileId, initialContent, language, readOnly }) {
         .map((state) => state.user)
         .filter((user) => user && user.id !== undefined && user.id !== null);
       setOnlineUsers(users);
+      syncRemoteCursorStyles(provider.awareness);
     });
 
     provider.on("sync", (isSynced) => {
